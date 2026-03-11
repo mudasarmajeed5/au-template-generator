@@ -3,7 +3,7 @@ import { DEFAULT_DATA, LabReportData } from "./labTypes";
 function AULogo() {
   return (
     <img
-      src="https://portals.au.edu.pk/admissions/assets/images/aulogo.png"
+      src="/aulogo.png"
       alt="Air University Logo"
       style={{ width: 280, height: "auto", display: "block", margin: "0 auto" }}
       onError={(e) => {
@@ -47,10 +47,7 @@ export const LabTemplate = ({
           fontSize: "11pt",
         }}
       >
-        Roll No:{" "}
-        <span style={{ borderBottom: "1px solid #000", paddingBottom: 1 }}>
-          {rollNumber}
-        </span>
+        Roll No: <span>{rollNumber}</span>
       </div>
 
       {/* Center content */}
@@ -86,7 +83,6 @@ export const LabTemplate = ({
           style={{
             fontWeight: "bold",
             fontSize: "14pt",
-            textDecoration: "underline",
             margin: "0 0 20px 0",
             textAlign: "center",
           }}
@@ -96,16 +92,14 @@ export const LabTemplate = ({
 
         {/* Student Info */}
         <p style={{ margin: "0 0 6px 0", textAlign: "center" }}>
-          <span style={{ textDecoration: "underline" }}>Name:</span> {name}
+          <span>Name:</span> {name}
         </p>
         <p style={{ margin: "0 0 6px 0", textAlign: "center" }}>
-          <span style={{ textDecoration: "underline" }}>Roll Number:</span>{" "}
-          {rollNumber}
+          <span>Roll Number:</span> {rollNumber}
         </p>
         {submittedTo && (
           <p style={{ margin: "0", textAlign: "center" }}>
-            Submitted <span style={{ textDecoration: "underline" }}>to:</span>{" "}
-            {submittedTo}
+            Submitted <span>to:</span> {submittedTo}
           </p>
         )}
       </div>

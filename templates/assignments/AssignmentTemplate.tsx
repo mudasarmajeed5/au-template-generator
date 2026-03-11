@@ -3,7 +3,7 @@ import { DEFAULT_DATA, AssignmentData } from "./assignmentTypes";
 function AULogo() {
   return (
     <img
-      src="https://portals.au.edu.pk/admissions/assets/images/aulogo.png"
+      src="/aulogo.png"
       alt="Air University Logo"
       style={{ width: 280, height: "auto", display: "block", margin: "0 auto" }}
       onError={(e) => {
@@ -51,10 +51,7 @@ export const AssignmentTemplate = ({
           fontSize: "11pt",
         }}
       >
-        Roll No:{" "}
-        <span style={{ borderBottom: "1px solid #000", paddingBottom: 1 }}>
-          {displayRollNumber}
-        </span>
+        Roll No: <span>{displayRollNumber}</span>
       </div>
 
       {/* Center content */}
@@ -90,7 +87,6 @@ export const AssignmentTemplate = ({
           style={{
             fontWeight: "bold",
             fontSize: "13pt",
-            textDecoration: "underline",
             margin: "0 0 20px 0",
             textAlign: "center",
           }}
@@ -102,15 +98,13 @@ export const AssignmentTemplate = ({
         {!isGroup && (
           <>
             <p style={{ margin: "0 0 6px 0", textAlign: "center" }}>
-              <span style={{ textDecoration: "underline" }}>Name:</span> {name}
+              <span>Name:</span> {name}
             </p>
             <p style={{ margin: "0 0 6px 0", textAlign: "center" }}>
-              Submitted <span style={{ textDecoration: "underline" }}>to:</span>{" "}
-              {instructor}
+              Submitted <span>to:</span> {instructor}
             </p>
             <p style={{ margin: "0", textAlign: "center" }}>
-              Roll <span style={{ textDecoration: "underline" }}>Number:</span>{" "}
-              {rollNumber}
+              Roll <span>Number:</span> {rollNumber}
             </p>
           </>
         )}

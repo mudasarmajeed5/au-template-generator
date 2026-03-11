@@ -25,19 +25,25 @@ export const assignmentSchema = z
     rollNumber: z.string().optional(),
     members: z.array(memberSchema).optional(),
   })
-  .refine(
-    (data) => {
-      if (data.isSingleMember) {
-        return data.name && data.name.length > 0;
-      } else {
-        return data.members && data.members.length > 0; 
+  .superRefine((data, ctx) => {
+    if (data.isSingleMember) {
+      if (!data.name || data.name.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Name is required",
+          path: ["name"],
+        });
       }
-    },
-    {
-      message: "Please provide member information",
-      path: ["members"],
-    },
-  );
+    } else {
+      if (!data.members || data.members.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "At least one member is required",
+          path: ["members"],
+        });
+      }
+    }
+  });
 
 export const projectReportSchema = z.object({
   projectTitle: z.string().min(1, "Project title is required"),

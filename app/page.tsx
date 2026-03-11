@@ -132,7 +132,13 @@ export default function Home() {
     } else {
       setPreviewData(projectValues);
     }
-  }, [docType, labValues, assignmentValues, projectValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    docType,
+    JSON.stringify(labValues),
+    JSON.stringify(assignmentValues),
+    JSON.stringify(projectValues),
+  ]);
 
   const handleDownload = async (blob: Blob, filename: string) => {
     const url = window.URL.createObjectURL(blob);
@@ -204,6 +210,7 @@ export default function Home() {
   const handleToggleMemberType = (single: boolean) => {
     setIsSingleMember(single);
     assignmentForm.setValue("isSingleMember", single);
+    assignmentForm.clearErrors(["name", "members"]);
     if (!single && assignmentMembers.fields.length === 0) {
       assignmentMembers.append({ reg: "", name: "" });
     }
@@ -451,6 +458,11 @@ export default function Home() {
                           placeholder="Enter your name"
                           className="h-9"
                         />
+                        {assignmentForm.formState.errors.name && (
+                          <p className="text-xs text-red-500">
+                            {assignmentForm.formState.errors.name.message}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs font-medium text-muted-foreground">
@@ -510,6 +522,12 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
+                    {assignmentForm.formState.errors.members && (
+                      <p className="text-xs text-red-500">
+                        {assignmentForm.formState.errors.members.message ||
+                          "Please fill in all member details"}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -689,10 +707,10 @@ export default function Home() {
             vary.
           </h3>
 
-          <div className="flex-1 flex items-center justify-center overflow-auto">
+          <div className="flex-1 flex items-center justify-center overflow-y-auto overflow-x-hidden">
             {/* Project Report - TSX Template Preview */}
             {docType === "project-report" && (
-              <div className="transform scale-[0.65] origin-center">
+              <div className="transform origin-center">
                 {(() => {
                   const templateData: ProjectReportData = {
                     projectTitle:
@@ -722,7 +740,7 @@ export default function Home() {
 
             {/* Assignment - TSX Template Preview */}
             {docType === "assignment" && (
-              <div className="transform scale-[0.55] origin-center">
+              <div className="transform origin-center">
                 {(() => {
                   const templateData: AssignmentData = {
                     title: (previewData.title as string) || undefined,
@@ -746,7 +764,7 @@ export default function Home() {
 
             {/* Lab Report - TSX Template Preview */}
             {docType === "lab-report" && (
-              <div className="transform scale-[0.55] origin-center">
+              <div className="transform origin-center">
                 {(() => {
                   const templateData: LabReportData = {
                     name: (previewData.name as string) || undefined,
