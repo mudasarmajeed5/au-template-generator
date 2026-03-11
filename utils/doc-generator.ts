@@ -12,7 +12,7 @@ export interface LabReportData {
   rollNumber: string;
   labWeek?: string;
   courseName: string;
-  submittedTo?: string;
+  instructor?: string;
   dateSubmitted: string;
 }
 
@@ -132,7 +132,7 @@ export function getTemplateFields(docType: DocumentType): string[] {
       "rollNumber",
       "labWeek",
       "courseName",
-      "submittedTo",
+      "instructor",
       "dateSubmitted",
       "generatedDate",
     ],

@@ -41,7 +41,7 @@ export function LabReportForm({ onSubmit, isLoading }: LabReportFormProps) {
       rollNumber: "",
       labWeek: "",
       courseName: "",
-      submittedTo: "",
+      instructor: "",
       dateSubmitted: new Date().toISOString().split("T")[0],
     },
   });
@@ -160,12 +160,12 @@ export function LabReportForm({ onSubmit, isLoading }: LabReportFormProps) {
             </h4>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="submittedTo" className="text-sm font-medium">
-                  Submitted To
+                <Label htmlFor="instructor" className="text-sm font-medium">
+                  Instructor
                 </Label>
                 <Input
-                  id="submittedTo"
-                  {...register("submittedTo")}
+                  id="instructor"
+                  {...register("instructor")}
                   placeholder="Instructor name"
                   className="h-11"
                 />

@@ -3,7 +3,7 @@ export interface LabReportData {
   rollNumber?: string;
   labWeek?: string;
   courseName?: string;
-  submittedTo?: string;
+  instructor?: string;
   dateSubmitted?: string;
 }
 
@@ -12,6 +12,6 @@ export const DEFAULT_DATA: Required<LabReportData> = {
   rollNumber: "FA21-BSE-001",
   labWeek: "Week 1",
   courseName: "Data Structures Lab",
-  submittedTo: "Dr. Jane Smith",
+  instructor: "Dr. Jane Smith",
   dateSubmitted: "March 11, 2026",
 };

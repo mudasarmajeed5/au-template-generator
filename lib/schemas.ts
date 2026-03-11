@@ -10,8 +10,14 @@ export const labReportSchema = z.object({
   rollNumber: z.string().min(1, "Roll number is required"),
   labWeek: z.string().optional(),
   courseName: z.string().min(1, "Course name is required"),
-  submittedTo: z.string().optional(),
+  instructor: z.string().optional(),
   dateSubmitted: z.string().min(1, "Date submitted is required"),
+});
+
+// Lenient member schema for form - allows empty strings at base level
+const lenientMemberSchema = z.object({
+  reg: z.string(),
+  name: z.string(),
 });
 
 export const assignmentSchema = z
@@ -23,7 +29,7 @@ export const assignmentSchema = z
     isSingleMember: z.boolean(),
     name: z.string().optional(),
     rollNumber: z.string().optional(),
-    members: z.array(memberSchema).optional(),
+    members: z.array(lenientMemberSchema).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.isSingleMember) {
@@ -35,11 +41,30 @@ export const assignmentSchema = z
         });
       }
     } else {
+      // Validate members only in group mode
       if (!data.members || data.members.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "At least one member is required",
           path: ["members"],
+        });
+      } else {
+        // Validate each member has required fields
+        data.members.forEach((member, index) => {
+          if (!member.reg || member.reg.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Registration number is required",
+              path: ["members", index, "reg"],
+            });
+          }
+          if (!member.name || member.name.length === 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Name is required",
+              path: ["members", index, "name"],
+            });
+          }
         });
       }
     }

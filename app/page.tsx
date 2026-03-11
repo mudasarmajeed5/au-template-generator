@@ -27,6 +27,9 @@ import {
   User,
   Users,
   Layout,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectTemplateOne } from "@/templates/projects/ProjectTemplateOne";
@@ -68,6 +71,7 @@ export default function Home() {
   const [previewData, setPreviewData] = useState<Record<string, unknown>>({});
   const [projectTemplate, setProjectTemplate] =
     useState<ProjectTemplateVariant>(1);
+  const [previewZoom, setPreviewZoom] = useState(0.5);
 
   // Lab Report Form
   const labForm = useForm<LabReportFormData>({
@@ -77,7 +81,7 @@ export default function Home() {
       rollNumber: "",
       labWeek: "",
       courseName: "",
-      submittedTo: "",
+      instructor: "",
       dateSubmitted: new Date().toISOString().split("T")[0],
     },
   });
@@ -335,10 +339,10 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
-                      Submitted To
+                      Instructor
                     </Label>
                     <Input
-                      {...labForm.register("submittedTo")}
+                      {...labForm.register("instructor")}
                       placeholder="Instructor name"
                       className="h-9"
                     />
@@ -702,15 +706,53 @@ export default function Home() {
 
         {/* Preview Section */}
         <div className="w-1/2 bg-slate-100 p-6 overflow-hidden flex flex-col">
-          <h3 className="text-sm text-slate-500 uppercase tracking-wider mb-4 shrink-0">
-            <span className="font-extrabold">Preview</span> - Final output may
-            vary.
-          </h3>
+          <div className="flex items-center justify-between mb-4 shrink-0">
+            <h3 className="text-sm text-slate-500 uppercase tracking-wider">
+              <span className="font-extrabold">Preview</span> - Final output may
+              vary.
+            </h3>
+            <div className="flex items-center gap-1 bg-white rounded-lg shadow-sm border p-1">
+              <button
+                type="button"
+                onClick={() => setPreviewZoom(Math.max(0.2, previewZoom - 0.1))}
+                className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+                title="Zoom out"
+              >
+                <ZoomOut className="h-4 w-4 text-slate-600" />
+              </button>
+              <span className="text-xs font-medium text-slate-600 w-12 text-center">
+                {Math.round(previewZoom * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewZoom(Math.min(1, previewZoom + 0.1))}
+                className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+                title="Zoom in"
+              >
+                <ZoomIn className="h-4 w-4 text-slate-600" />
+              </button>
+              <div className="w-px h-4 bg-slate-200 mx-1" />
+              <button
+                type="button"
+                onClick={() => setPreviewZoom(0.5)}
+                className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+                title="Reset zoom"
+              >
+                <RotateCcw className="h-4 w-4 text-slate-600" />
+              </button>
+            </div>
+          </div>
 
-          <div className="flex-1 flex items-center justify-center overflow-y-auto overflow-x-hidden">
+          <div className="flex-1 overflow-auto bg-slate-200/50 rounded-lg flex items-center justify-center">
             {/* Project Report - TSX Template Preview */}
             {docType === "project-report" && (
-              <div className="transform origin-center">
+              <div
+                style={{
+                  transform: `scale(${previewZoom})`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.15s ease-out",
+                }}
+              >
                 {(() => {
                   const templateData: ProjectReportData = {
                     projectTitle:
@@ -740,7 +782,13 @@ export default function Home() {
 
             {/* Assignment - TSX Template Preview */}
             {docType === "assignment" && (
-              <div className="transform origin-center">
+              <div
+                style={{
+                  transform: `scale(${previewZoom})`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.15s ease-out",
+                }}
+              >
                 {(() => {
                   const templateData: AssignmentData = {
                     title: (previewData.title as string) || undefined,
@@ -764,15 +812,20 @@ export default function Home() {
 
             {/* Lab Report - TSX Template Preview */}
             {docType === "lab-report" && (
-              <div className="transform origin-center">
+              <div
+                style={{
+                  transform: `scale(${previewZoom})`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.15s ease-out",
+                }}
+              >
                 {(() => {
                   const templateData: LabReportData = {
                     name: (previewData.name as string) || undefined,
                     rollNumber: (previewData.rollNumber as string) || undefined,
                     labWeek: (previewData.labWeek as string) || undefined,
                     courseName: (previewData.courseName as string) || undefined,
-                    submittedTo:
-                      (previewData.submittedTo as string) || undefined,
+                    instructor: (previewData.instructor as string) || undefined,
                     dateSubmitted:
                       (previewData.dateSubmitted as string) || undefined,
                   };

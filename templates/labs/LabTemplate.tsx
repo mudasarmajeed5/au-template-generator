@@ -19,7 +19,7 @@ export const LabTemplate = ({
   rollNumber = DEFAULT_DATA.rollNumber,
   labWeek = DEFAULT_DATA.labWeek,
   courseName = DEFAULT_DATA.courseName,
-  submittedTo = DEFAULT_DATA.submittedTo,
+  instructor = DEFAULT_DATA.instructor,
   dateSubmitted = DEFAULT_DATA.dateSubmitted,
 }: LabReportData) => {
   return (
@@ -97,9 +97,9 @@ export const LabTemplate = ({
         <p style={{ margin: "0 0 6px 0", textAlign: "center" }}>
           <span>Roll Number:</span> {rollNumber}
         </p>
-        {submittedTo && (
+        {instructor && (
           <p style={{ margin: "0", textAlign: "center" }}>
-            Submitted <span>to:</span> {submittedTo}
+            Submitted <span>to:</span> {instructor}
           </p>
         )}
       </div>
