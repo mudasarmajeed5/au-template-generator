@@ -48,9 +48,9 @@ export function LabReportForm({ onSubmit, isLoading }: LabReportFormProps) {
 
   return (
     <Card className="border-2 shadow-xl shadow-emerald-500/5 overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
+      <CardHeader className="bg-linear-to-r from-emerald-50 to-teal-50 border-b">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
             <FlaskConical className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -196,7 +196,7 @@ export function LabReportForm({ onSubmit, isLoading }: LabReportFormProps) {
           <div className="pt-4">
             <Button
               type="submit"
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
+              className="w-full h-12 text-base font-semibold bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
               disabled={isLoading}
             >
               {isLoading ? (

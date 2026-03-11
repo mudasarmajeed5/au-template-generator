@@ -5,6 +5,7 @@ import path from "path";
 
 export type DocumentType = "lab-report" | "assignment" | "project-report";
 export type ProjectTemplateVariant = 1 | 2 | 3;
+export type AssignmentTemplateVariant = "individual" | "group";
 
 export interface LabReportData {
   name: string;
@@ -25,6 +26,7 @@ export interface AssignmentData {
   courseName: string;
   instructor: string;
   dateSubmitted: string;
+  rollNumber?: string;
   name?: string; // For single member
   members?: Member[]; // For multiple members
 }
@@ -41,19 +43,30 @@ export type FormData = LabReportData | AssignmentData | ProjectReportData;
 
 function getTemplatePath(
   docType: DocumentType,
-  templateVariant?: ProjectTemplateVariant,
+  options?: {
+    projectVariant?: ProjectTemplateVariant;
+    assignmentVariant?: AssignmentTemplateVariant;
+  },
 ): string {
-  if (docType === "project-report" && templateVariant) {
+  if (docType === "project-report" && options?.projectVariant) {
     return path.join(
       process.cwd(),
       "templates",
-      `projects/project-report-${templateVariant}.docx`,
+      `projects/project-report-${options.projectVariant}.docx`,
+    );
+  }
+
+  if (docType === "assignment" && options?.assignmentVariant) {
+    return path.join(
+      process.cwd(),
+      "templates",
+      `assignments/assignment-template-${options.assignmentVariant}.docx`,
     );
   }
 
   const templateMap: Record<DocumentType, string> = {
     "lab-report": "labs/lab-report.docx",
-    assignment: "assignments/assignment.docx",
+    assignment: "assignments/assignment-template-individual.docx",
     "project-report": "projects/project-report-1.docx",
   };
 
@@ -71,9 +84,12 @@ function formatDate(date: Date): string {
 export async function generateDocument(
   docType: DocumentType,
   formData: FormData,
-  templateVariant?: ProjectTemplateVariant,
+  options?: {
+    projectVariant?: ProjectTemplateVariant;
+    assignmentVariant?: AssignmentTemplateVariant;
+  },
 ): Promise<Buffer> {
-  const templatePath = getTemplatePath(docType, templateVariant);
+  const templatePath = getTemplatePath(docType, options);
 
   // Read the template file
   const templateContent = fs.readFileSync(templatePath, "binary");

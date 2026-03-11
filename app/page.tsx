@@ -33,6 +33,10 @@ import { ProjectTemplateOne } from "@/templates/projects/ProjectTemplateOne";
 import { ProjectTemplateTwo } from "@/templates/projects/ProjectTemplateTwo";
 import { ProjectTemplateThree } from "@/templates/projects/ProjectTemplateThree";
 import { ProjectReportData } from "@/templates/projects/projectProposalTypes";
+import { AssignmentTemplate } from "@/templates/assignments/AssignmentTemplate";
+import { AssignmentData } from "@/templates/assignments/assignmentTypes";
+import { LabTemplate } from "@/templates/labs/LabTemplate";
+import { LabReportData } from "@/templates/labs/labTypes";
 
 const tabs = [
   {
@@ -88,6 +92,7 @@ export default function Home() {
       dateSubmitted: new Date().toISOString().split("T")[0],
       isSingleMember: true,
       name: "",
+      rollNumber: "",
       members: [{ reg: "", name: "" }],
     },
   });
@@ -174,8 +179,18 @@ export default function Home() {
         throw new Error(error.error || "Failed to generate document");
       }
 
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = `${docType}-${Date.now()}.docx`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) {
+          filename = match[1];
+        }
+      }
+
       const blob = await response.blob();
-      await handleDownload(blob, `${docType}-${Date.now()}.docx`);
+      await handleDownload(blob, filename);
     } catch (error) {
       console.error("Error generating document:", error);
       alert(
@@ -342,7 +357,7 @@ export default function Home() {
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  {isLoading ? "Generating..." : "Generate & Download"}
+                  {isLoading ? "Generating..." : "Download"}
                 </Button>
               </form>
             )}
@@ -425,15 +440,29 @@ export default function Home() {
                 </div>
 
                 {isSingleMember ? (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      Your Name *
-                    </Label>
-                    <Input
-                      {...assignmentForm.register("name")}
-                      placeholder="Enter your name"
-                      className="h-9"
-                    />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          Your Name *
+                        </Label>
+                        <Input
+                          {...assignmentForm.register("name")}
+                          placeholder="Enter your name"
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          Roll Number
+                        </Label>
+                        <Input
+                          {...assignmentForm.register("rollNumber")}
+                          placeholder="FA21-BSE-001"
+                          className="h-9 font-mono text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -494,7 +523,7 @@ export default function Home() {
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  {isLoading ? "Generating..." : "Generate & Download"}
+                  {isLoading ? "Generating..." : "Download"}
                 </Button>
               </form>
             )}
@@ -646,7 +675,7 @@ export default function Home() {
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  {isLoading ? "Generating..." : "Generate & Download"}
+                  {isLoading ? "Generating..." : "Download"}
                 </Button>
               </form>
             )}
@@ -655,14 +684,15 @@ export default function Home() {
 
         {/* Preview Section */}
         <div className="w-1/2 bg-slate-100 p-6 overflow-hidden flex flex-col">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 shrink-0">
-            Live Preview
+          <h3 className="text-sm text-slate-500 uppercase tracking-wider mb-4 shrink-0">
+            <span className="font-extrabold">Preview</span> - Final output may
+            vary.
           </h3>
 
           <div className="flex-1 flex items-center justify-center overflow-auto">
             {/* Project Report - TSX Template Preview */}
             {docType === "project-report" && (
-              <div className="transform scale-[0.45] origin-center">
+              <div className="transform scale-[0.65] origin-center">
                 {(() => {
                   const templateData: ProjectReportData = {
                     projectTitle:
@@ -690,154 +720,47 @@ export default function Home() {
               </div>
             )}
 
-            {/* Document Preview Card for Lab Report and Assignment */}
-            {docType !== "project-report" && (
-              <div className="bg-white rounded-xl shadow-xl border overflow-hidden w-full max-w-xs aspect-[8.5/11] flex flex-col">
-                {/* Header accent bar */}
-                <div
-                  className={cn(
-                    "h-2 bg-linear-to-r shrink-0",
-                    currentTab.color === "emerald" &&
-                      "from-emerald-500 to-teal-600",
-                    currentTab.color === "blue" &&
-                      "from-blue-500 to-indigo-600",
-                    currentTab.color === "violet" &&
-                      "from-violet-500 to-purple-600",
-                  )}
-                />
+            {/* Assignment - TSX Template Preview */}
+            {docType === "assignment" && (
+              <div className="transform scale-[0.55] origin-center">
+                {(() => {
+                  const templateData: AssignmentData = {
+                    title: (previewData.title as string) || undefined,
+                    courseName: (previewData.courseName as string) || undefined,
+                    instructor: (previewData.instructor as string) || undefined,
+                    dateSubmitted:
+                      (previewData.dateSubmitted as string) || undefined,
+                    rollNumber: (previewData.rollNumber as string) || undefined,
+                    name: (previewData.name as string) || undefined,
+                    members: isSingleMember
+                      ? []
+                      : ((previewData.members as Member[]) || []).filter(
+                          (m) => m.name || m.reg,
+                        ),
+                  };
 
-                <div className="flex-1 p-6 flex flex-col min-h-0">
-                  {/* University/Institution placeholder */}
-                  <div className="text-center mb-4 shrink-0">
-                    <div className="h-3 w-32 bg-slate-200 rounded mx-auto mb-2" />
-                    <div className="h-2 w-24 bg-slate-100 rounded mx-auto" />
-                  </div>
+                  return <AssignmentTemplate {...templateData} />;
+                })()}
+              </div>
+            )}
 
-                  {/* Title */}
-                  <div className="text-center my-auto py-6 shrink-0">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">
-                      {docType === "lab-report" && "Lab Report"}
-                      {docType === "assignment" && "Assignment"}
-                    </p>
-                    <h2 className="text-sm font-bold text-slate-800 leading-tight">
-                      {docType === "lab-report" &&
-                        ((previewData.courseName as string) || "Course Name")}
-                      {docType === "assignment" &&
-                        ((previewData.title as string) || "Assignment Title")}
-                    </h2>
-                    {docType === "lab-report" &&
-                    (previewData.labWeek as string) ? (
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        {previewData.labWeek as string}
-                      </p>
-                    ) : null}
-                  </div>
+            {/* Lab Report - TSX Template Preview */}
+            {docType === "lab-report" && (
+              <div className="transform scale-[0.55] origin-center">
+                {(() => {
+                  const templateData: LabReportData = {
+                    name: (previewData.name as string) || undefined,
+                    rollNumber: (previewData.rollNumber as string) || undefined,
+                    labWeek: (previewData.labWeek as string) || undefined,
+                    courseName: (previewData.courseName as string) || undefined,
+                    submittedTo:
+                      (previewData.submittedTo as string) || undefined,
+                    dateSubmitted:
+                      (previewData.dateSubmitted as string) || undefined,
+                  };
 
-                  {/* Details */}
-                  <div className="space-y-2 text-[9px] mt-auto shrink-0">
-                    {docType === "lab-report" && (
-                      <>
-                        <div className="flex justify-between border-b border-slate-100 pb-1">
-                          <span className="text-slate-400">Name</span>
-                          <span className="font-medium text-slate-700">
-                            {(previewData.name as string) || "—"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-100 pb-1">
-                          <span className="text-slate-400">Roll Number</span>
-                          <span className="font-mono text-slate-700">
-                            {(previewData.rollNumber as string) || "—"}
-                          </span>
-                        </div>
-                        {previewData.submittedTo && (
-                          <div className="flex justify-between border-b border-slate-100 pb-1">
-                            <span className="text-slate-400">Submitted To</span>
-                            <span className="text-slate-700">
-                              {previewData.submittedTo as string}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Date</span>
-                          <span className="text-slate-700">
-                            {(previewData.dateSubmitted as string) || "—"}
-                          </span>
-                        </div>
-                      </>
-                    )}
-
-                    {docType === "assignment" && (
-                      <>
-                        <div className="flex justify-between border-b border-slate-100 pb-1">
-                          <span className="text-slate-400">Course</span>
-                          <span className="text-slate-700">
-                            {(previewData.courseName as string) || "—"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-100 pb-1">
-                          <span className="text-slate-400">Instructor</span>
-                          <span className="text-slate-700">
-                            {(previewData.instructor as string) || "—"}
-                          </span>
-                        </div>
-                        {isSingleMember ? (
-                          <div className="flex justify-between border-b border-slate-100 pb-1">
-                            <span className="text-slate-400">Submitted By</span>
-                            <span className="font-medium text-slate-700">
-                              {(previewData.name as string) || "—"}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="border-b border-slate-100 pb-1">
-                            <span className="text-slate-400">Team Members</span>
-                            <div className="mt-1 space-y-0.5">
-                              {((previewData.members as Member[]) || [])
-                                .filter((m) => m.name || m.reg)
-                                .map((m, i) => (
-                                  <div
-                                    key={i}
-                                    className="flex justify-between pl-2"
-                                  >
-                                    <span className="font-mono text-slate-500">
-                                      {m.reg || "—"}
-                                    </span>
-                                    <span className="text-slate-700">
-                                      {m.name || "—"}
-                                    </span>
-                                  </div>
-                                ))}
-                              {!((previewData.members as Member[]) || []).some(
-                                (m) => m.name || m.reg,
-                              ) && (
-                                <span className="text-slate-400 pl-2">
-                                  No members added
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Date</span>
-                          <span className="text-slate-700">
-                            {(previewData.dateSubmitted as string) || "—"}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="mt-4 pt-2 border-t border-slate-100 text-center shrink-0">
-                    <p className="text-[8px] text-slate-400">
-                      Generated on{" "}
-                      {new Date().toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
+                  return <LabTemplate {...templateData} />;
+                })()}
               </div>
             )}
           </div>

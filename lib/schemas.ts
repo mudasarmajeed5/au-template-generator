@@ -22,6 +22,7 @@ export const assignmentSchema = z
     dateSubmitted: z.string().min(1, "Date submitted is required"),
     isSingleMember: z.boolean(),
     name: z.string().optional(),
+    rollNumber: z.string().optional(),
     members: z.array(memberSchema).optional(),
   })
   .refine(
@@ -29,7 +30,7 @@ export const assignmentSchema = z
       if (data.isSingleMember) {
         return data.name && data.name.length > 0;
       } else {
-        return data.members && data.members.length > 0;
+        return data.members && data.members.length > 0; 
       }
     },
     {
