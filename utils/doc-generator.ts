@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 
 export type DocumentType = "lab-report" | "assignment" | "project-report";
+export type ProjectTemplateVariant = 1 | 2 | 3;
 
 export interface LabReportData {
   name: string;
@@ -38,11 +39,22 @@ export interface ProjectReportData {
 
 export type FormData = LabReportData | AssignmentData | ProjectReportData;
 
-function getTemplatePath(docType: DocumentType): string {
+function getTemplatePath(
+  docType: DocumentType,
+  templateVariant?: ProjectTemplateVariant,
+): string {
+  if (docType === "project-report" && templateVariant) {
+    return path.join(
+      process.cwd(),
+      "templates",
+      `projects/project-report-${templateVariant}.docx`,
+    );
+  }
+
   const templateMap: Record<DocumentType, string> = {
     "lab-report": "labs/lab-report.docx",
     assignment: "assignments/assignment.docx",
-    "project-report": "projects/project-report.docx",
+    "project-report": "projects/project-report-1.docx",
   };
 
   return path.join(process.cwd(), "templates", templateMap[docType]);
@@ -59,8 +71,9 @@ function formatDate(date: Date): string {
 export async function generateDocument(
   docType: DocumentType,
   formData: FormData,
+  templateVariant?: ProjectTemplateVariant,
 ): Promise<Buffer> {
-  const templatePath = getTemplatePath(docType);
+  const templatePath = getTemplatePath(docType, templateVariant);
 
   // Read the template file
   const templateContent = fs.readFileSync(templatePath, "binary");

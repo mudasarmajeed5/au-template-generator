@@ -3,6 +3,7 @@ import {
   generateDocument,
   DocumentType,
   FormData as DocFormData,
+  ProjectTemplateVariant,
 } from "@/utils/doc-generator";
 
 export const runtime = "nodejs";
@@ -10,9 +11,10 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { docType, formData } = body as {
+    const { docType, formData, templateVariant } = body as {
       docType: DocumentType;
       formData: DocFormData;
+      templateVariant?: ProjectTemplateVariant;
     };
 
     if (!docType || !formData) {
@@ -35,14 +37,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate the document
-    const docBuffer = await generateDocument(docType, formData);
+    // Generate the document with optional template variant
+    const docBuffer = await generateDocument(
+      docType,
+      formData,
+      templateVariant,
+    );
 
-    // Create filename based on document type
+    // Create filename based on document type and template variant
     const filenameMap: Record<DocumentType, string> = {
       "lab-report": "lab-report",
       assignment: "assignment",
-      "project-report": "project-report",
+      "project-report": `project-report${templateVariant ? `-style-${templateVariant}` : ""}`,
     };
 
     const filename = `${filenameMap[docType]}-${Date.now()}.docx`;
