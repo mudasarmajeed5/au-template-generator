@@ -1,18 +1,11 @@
 import { DEFAULT_DATA, AssignmentData } from "./assignmentTypes";
-
-function AULogo() {
-  return (
-    <img
-      src="/aulogo.png"
-      alt="Air University Logo"
-      style={{ width: 280, height: "auto", display: "block", margin: "0 auto" }}
-      onError={(e) => {
-        // fallback: render text-based logo if image fails
-        (e.target as HTMLImageElement).style.display = "none";
-      }}
-    />
-  );
-}
+import {
+  AULogo,
+  DocumentWrapper,
+  PageNumber,
+  DateFooter,
+  RollNumberHeader,
+} from "../shared";
 
 export const AssignmentTemplate = ({
   title = DEFAULT_DATA.title,
@@ -27,32 +20,8 @@ export const AssignmentTemplate = ({
   const displayRollNumber = isGroup ? members[0]?.reg : rollNumber;
 
   return (
-    <div
-      style={{
-        width: "210mm",
-        minHeight: "297mm",
-        backgroundColor: "#fff",
-        fontFamily: "Times New Roman, Times, serif",
-        fontSize: "13pt",
-        color: "#000",
-        position: "relative",
-        boxSizing: "border-box",
-        padding: "20mm 22mm 20mm 22mm",
-        margin: "0 auto",
-        boxShadow: "0 0 12px rgba(0,0,0,0.15)",
-      }}
-    >
-      {/* Top-left: Roll No */}
-      <div
-        style={{
-          position: "absolute",
-          top: "18mm",
-          left: "22mm",
-          fontSize: "11pt",
-        }}
-      >
-        Roll No: <span>{displayRollNumber}</span>
-      </div>
+    <DocumentWrapper>
+      <RollNumberHeader rollNumber={displayRollNumber || ""} />
 
       {/* Center content */}
       <div
@@ -179,36 +148,8 @@ export const AssignmentTemplate = ({
         )}
       </div>
 
-      {/* Bottom-left: Date */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "14mm",
-          left: "22mm",
-          fontSize: "11pt",
-          color: "#c0392b",
-          fontStyle: "italic",
-        }}
-      >
-        {dateSubmitted}
-      </div>
-
-      {/* Bottom-right: Page number */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "14mm",
-          right: "18mm",
-          backgroundColor: "#555",
-          color: "#fff",
-          fontSize: "11pt",
-          padding: "3px 10px",
-          borderRadius: 2,
-          fontFamily: "Arial, sans-serif",
-        }}
-      >
-        1
-      </div>
-    </div>
+      <DateFooter date={dateSubmitted} />
+      <PageNumber page={1} />
+    </DocumentWrapper>
   );
 };

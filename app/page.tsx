@@ -11,7 +11,6 @@ import {
   labReportSchema,
   assignmentSchema,
   projectReportSchema,
-  Member,
 } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,14 +31,12 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ProjectTemplateOne } from "@/templates/projects/ProjectTemplateOne";
-import { ProjectTemplateTwo } from "@/templates/projects/ProjectTemplateTwo";
-import { ProjectTemplateThree } from "@/templates/projects/ProjectTemplateThree";
-import { ProjectReportData } from "@/templates/projects/projectProposalTypes";
-import { AssignmentTemplate } from "@/templates/assignments/AssignmentTemplate";
-import { AssignmentData } from "@/templates/assignments/assignmentTypes";
-import { LabTemplate } from "@/templates/labs/LabTemplate";
-import { LabReportData } from "@/templates/labs/labTypes";
+import {
+  LabTemplateRenderer,
+  AssignmentTemplateRenderer,
+  ProjectTemplateRenderer,
+  ProjectTemplateVariant,
+} from "@/components/preview";
 
 const tabs = [
   {
@@ -61,8 +58,6 @@ const tabs = [
     color: "violet",
   },
 ];
-
-export type ProjectTemplateVariant = 1 | 2 | 3;
 
 export default function Home() {
   const [docType, setDocType] = useState<DocumentType>("lab-report");
@@ -744,95 +739,24 @@ export default function Home() {
           </div>
 
           <div className="flex-1 overflow-auto bg-slate-200/50 rounded-lg flex items-center justify-center">
-            {/* Project Report - TSX Template Preview */}
             {docType === "project-report" && (
-              <div
-                style={{
-                  transform: `scale(${previewZoom})`,
-                  transformOrigin: "center center",
-                  transition: "transform 0.15s ease-out",
-                }}
-              >
-                {(() => {
-                  const templateData: ProjectReportData = {
-                    projectTitle:
-                      (previewData.projectTitle as string) || undefined,
-                    courseName: (previewData.courseName as string) || undefined,
-                    instructor: (previewData.instructor as string) || undefined,
-                    dateSubmitted:
-                      (previewData.dateSubmitted as string) || undefined,
-                    members: ((previewData.members as Member[]) || []).filter(
-                      (m) => m.name || m.reg,
-                    ),
-                  };
-
-                  switch (projectTemplate) {
-                    case 1:
-                      return <ProjectTemplateOne {...templateData} />;
-                    case 2:
-                      return <ProjectTemplateTwo {...templateData} />;
-                    case 3:
-                      return <ProjectTemplateThree {...templateData} />;
-                    default:
-                      return <ProjectTemplateOne {...templateData} />;
-                  }
-                })()}
-              </div>
+              <ProjectTemplateRenderer
+                data={previewData}
+                zoom={previewZoom}
+                templateVariant={projectTemplate}
+              />
             )}
 
-            {/* Assignment - TSX Template Preview */}
             {docType === "assignment" && (
-              <div
-                style={{
-                  transform: `scale(${previewZoom})`,
-                  transformOrigin: "center center",
-                  transition: "transform 0.15s ease-out",
-                }}
-              >
-                {(() => {
-                  const templateData: AssignmentData = {
-                    title: (previewData.title as string) || undefined,
-                    courseName: (previewData.courseName as string) || undefined,
-                    instructor: (previewData.instructor as string) || undefined,
-                    dateSubmitted:
-                      (previewData.dateSubmitted as string) || undefined,
-                    rollNumber: (previewData.rollNumber as string) || undefined,
-                    name: (previewData.name as string) || undefined,
-                    members: isSingleMember
-                      ? []
-                      : ((previewData.members as Member[]) || []).filter(
-                          (m) => m.name || m.reg,
-                        ),
-                  };
-
-                  return <AssignmentTemplate {...templateData} />;
-                })()}
-              </div>
+              <AssignmentTemplateRenderer
+                data={previewData}
+                zoom={previewZoom}
+                isSingleMember={isSingleMember}
+              />
             )}
 
-            {/* Lab Report - TSX Template Preview */}
             {docType === "lab-report" && (
-              <div
-                style={{
-                  transform: `scale(${previewZoom})`,
-                  transformOrigin: "center center",
-                  transition: "transform 0.15s ease-out",
-                }}
-              >
-                {(() => {
-                  const templateData: LabReportData = {
-                    name: (previewData.name as string) || undefined,
-                    rollNumber: (previewData.rollNumber as string) || undefined,
-                    labWeek: (previewData.labWeek as string) || undefined,
-                    courseName: (previewData.courseName as string) || undefined,
-                    instructor: (previewData.instructor as string) || undefined,
-                    dateSubmitted:
-                      (previewData.dateSubmitted as string) || undefined,
-                  };
-
-                  return <LabTemplate {...templateData} />;
-                })()}
-              </div>
+              <LabTemplateRenderer data={previewData} zoom={previewZoom} />
             )}
           </div>
         </div>
