@@ -31,10 +31,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  LabTemplateRenderer,
-  AssignmentTemplateRenderer,
-  ProjectTemplateRenderer,
-  ProjectTemplateVariant,
+  WordDocPreview,
+  PreviewTemplateKey,
+  type ProjectTemplateVariant,
 } from "@/components/preview";
 import { ModeToggle } from "@/components/mode-toggle";
 
@@ -197,6 +196,15 @@ export default function Home() {
   };
 
   const currentTab = tabs.find((t) => t.id === docType)!;
+
+  const previewTemplateKey: PreviewTemplateKey =
+    docType === "project-report"
+      ? `project-report-${projectTemplate}`
+      : docType === "assignment"
+        ? isSingleMember
+          ? "assignment-individual"
+          : "assignment-group"
+        : "lab-report";
 
   const getColorClasses = (color: string, active: boolean) => {
     const colors: Record<
@@ -720,26 +728,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto bg-slate-200/50 dark:bg-slate-800/50 rounded-lg flex items-center justify-center">
-            {docType === "project-report" && (
-              <ProjectTemplateRenderer
-                data={previewData}
-                zoom={previewZoom}
-                templateVariant={projectTemplate}
-              />
-            )}
-
-            {docType === "assignment" && (
-              <AssignmentTemplateRenderer
-                data={previewData}
-                zoom={previewZoom}
-                isSingleMember={isSingleMember}
-              />
-            )}
-
-            {docType === "lab-report" && (
-              <LabTemplateRenderer data={previewData} zoom={previewZoom} />
-            )}
+          <div className="flex-1 overflow-auto rounded-lg">
+            <WordDocPreview
+              key={previewTemplateKey}
+              templateKey={previewTemplateKey}
+              zoom={previewZoom}
+            />
           </div>
         </div>
       </div>
