@@ -14,34 +14,37 @@ export function ZoomControls({
   onReset,
 }: ZoomControlsProps) {
   return (
-    <div className="flex items-center gap-1 bg-white rounded-lg shadow-sm border p-1">
+    <div className="flex items-center gap-1 rounded-lg border bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <button
         type="button"
         onClick={onZoomOut}
-        className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+        className="rounded p-2 transition-colors hover:bg-slate-100 sm:p-1.5 dark:hover:bg-slate-700"
         title="Zoom out"
+        aria-label="Zoom out"
       >
-        <ZoomOut className="h-4 w-4 text-slate-600" />
+        <ZoomOut className="h-4 w-4 text-slate-600 dark:text-slate-300" />
       </button>
-      <span className="text-xs font-medium text-slate-600 w-12 text-center">
+      <span className="w-12 text-center text-xs font-medium text-slate-600 dark:text-slate-300">
         {Math.round(zoom * 100)}%
       </span>
       <button
         type="button"
         onClick={onZoomIn}
-        className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+        className="rounded p-2 transition-colors hover:bg-slate-100 sm:p-1.5 dark:hover:bg-slate-700"
         title="Zoom in"
+        aria-label="Zoom in"
       >
-        <ZoomIn className="h-4 w-4 text-slate-600" />
+        <ZoomIn className="h-4 w-4 text-slate-600 dark:text-slate-300" />
       </button>
-      <div className="w-px h-4 bg-slate-200 mx-1" />
+      <div className="mx-1 h-4 w-px bg-slate-200 dark:bg-slate-600" />
       <button
         type="button"
         onClick={onReset}
-        className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+        className="rounded p-2 transition-colors hover:bg-slate-100 sm:p-1.5 dark:hover:bg-slate-700"
         title="Reset zoom"
+        aria-label="Reset zoom"
       >
-        <RotateCcw className="h-4 w-4 text-slate-600" />
+        <RotateCcw className="h-4 w-4 text-slate-600 dark:text-slate-300" />
       </button>
     </div>
   );

@@ -1,84 +1,28 @@
-import PizZip from "pizzip";
-import Docxtemplater from "docxtemplater";
 import fs from "fs";
 import path from "path";
+import {
+  prepareDocument,
+  renderDocx,
+  type AssignmentTemplateVariant,
+  type DocumentType,
+  type FormData,
+  type ProjectTemplateVariant,
+} from "./docx-core";
 
-export type DocumentType = "lab-report" | "assignment" | "project-report";
-export type ProjectTemplateVariant = 1 | 2 | 3;
-export type AssignmentTemplateVariant = "individual" | "group";
+export type {
+  AssignmentData,
+  AssignmentTemplateVariant,
+  DocumentType,
+  LabReportData,
+  Member,
+  ProjectReportData,
+  ProjectTemplateVariant,
+} from "./docx-core";
+export { type FormData } from "./docx-core";
 
-export interface LabReportData {
-  name: string;
-  rollNumber: string;
-  labWeek?: string;
-  courseName: string;
-  instructor?: string;
-  dateSubmitted: string;
-}
-
-export interface Member {
-  reg: string;
-  name: string;
-}
-
-export interface AssignmentData {
-  title: string;
-  courseName: string;
-  instructor: string;
-  dateSubmitted: string;
-  rollNumber?: string;
-  name?: string; // For single member
-  members?: Member[]; // For multiple members
-}
-
-export interface ProjectReportData {
-  projectTitle: string;
-  courseName: string;
-  instructor: string;
-  dateSubmitted: string;
-  members: Member[];
-}
-
-export type FormData = LabReportData | AssignmentData | ProjectReportData;
-
-function getTemplatePath(
-  docType: DocumentType,
-  options?: {
-    projectVariant?: ProjectTemplateVariant;
-    assignmentVariant?: AssignmentTemplateVariant;
-  },
-): string {
-  if (docType === "project-report" && options?.projectVariant) {
-    return path.join(
-      process.cwd(),
-      "templates",
-      `projects/project-report-${options.projectVariant}.docx`,
-    );
-  }
-
-  if (docType === "assignment" && options?.assignmentVariant) {
-    return path.join(
-      process.cwd(),
-      "templates",
-      `assignments/assignment-template-${options.assignmentVariant}.docx`,
-    );
-  }
-
-  const templateMap: Record<DocumentType, string> = {
-    "lab-report": "labs/lab-report.docx",
-    assignment: "assignments/assignment-template-individual.docx",
-    "project-report": "projects/project-report-1.docx",
-  };
-
-  return path.join(process.cwd(), "templates", templateMap[docType]);
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+/** Serves the same templates the browser loads statically from `/public`. */
+function resolveTemplateFile(templatePath: string): string {
+  return path.join(process.cwd(), "public", templatePath.replace(/^\//, ""));
 }
 
 export async function generateDocument(
@@ -88,41 +32,14 @@ export async function generateDocument(
     projectVariant?: ProjectTemplateVariant;
     assignmentVariant?: AssignmentTemplateVariant;
   },
-): Promise<Buffer> {
-  const templatePath = getTemplatePath(docType, options);
+): Promise<Uint8Array<ArrayBuffer>> {
+  const prepared = prepareDocument(docType, formData, options);
 
-  // Read the template file
-  const templateContent = fs.readFileSync(templatePath, "binary");
+  // Read the template file (templates are served statically to the browser,
+  // and read from disk here as the server-side fallback path).
+  const template = await fs.promises.readFile(resolveTemplateFile(prepared.templatePath));
 
-  // Unzip the template
-  const zip = new PizZip(templateContent);
-
-  // Create docxtemplater instance
-  const doc = new Docxtemplater(zip, {
-    paragraphLoop: true,
-    linebreaks: true,
-  });
-
-  // Add generated date to the data
-  const generatedDate = formatDate(new Date());
-
-  // Prepare data with generated date
-  const data = {
-    ...formData,
-    generatedDate,
-    pageNumber: "{PAGE}",
-  };
-
-  // Replace placeholders
-  doc.render(data);
-
-  // Generate the output
-  const buf = doc.getZip().generate({
-    type: "nodebuffer",
-    compression: "DEFLATE",
-  });
-
-  return buf;
+  return renderDocx(template, prepared.payload);
 }
 
 export function getTemplateFields(docType: DocumentType): string[] {

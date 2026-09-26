@@ -5,5 +5,6 @@ export {
   type ProjectTemplateVariant,
 } from "./ProjectTemplateRenderer";
 export { WordDocPreview, type PreviewTemplateKey } from "./WordDocPreview";
+export { PreviewSection } from "./PreviewSection";
 export { ZoomControls } from "./ZoomControls";
 export { PreviewPanel } from "./PreviewPanel";

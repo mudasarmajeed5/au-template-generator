@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import {tabs} from "@/app/constants/dashboard";
+import { tabs } from "@/app/constants/dashboard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   DocumentType,
@@ -25,28 +25,36 @@ import {
   User,
   Users,
   Layout,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PreviewSection } from "@/components/preview/PreviewSection";
+import { prepareDocument, type ProjectTemplateVariant } from "@/utils/docx-core";
 import {
-  WordDocPreview,
-  PreviewTemplateKey,
-  type ProjectTemplateVariant,
-} from "@/components/preview";
+  downloadBlob,
+  generateDocxBlob,
+  generateDocxViaApi,
+} from "@/utils/docx-client";
 import { ModeToggle } from "@/components/mode-toggle";
 
-
+function FieldError({
+  error,
+  fallback,
+}: {
+  error?: { message?: string };
+  fallback?: string;
+}) {
+  if (!error) return null;
+  const message = error.message || fallback;
+  if (!message) return null;
+  return <p className="text-xs text-red-600 dark:text-red-400">{message}</p>;
+}
 
 export default function Home() {
   const [docType, setDocType] = useState<DocumentType>("lab-report");
   const [isLoading, setIsLoading] = useState(false);
   const [isSingleMember, setIsSingleMember] = useState(true);
-  const [previewData, setPreviewData] = useState<Record<string, unknown>>({});
   const [projectTemplate, setProjectTemplate] =
     useState<ProjectTemplateVariant>(1);
-  const [previewZoom, setPreviewZoom] = useState(0.5);
 
   // Lab Report Form
   const labForm = useForm<LabReportFormData>({
@@ -98,84 +106,37 @@ export default function Home() {
     name: "members",
   });
 
-  // Watch form values for preview
-  const labValues = labForm.watch();
-  const assignmentValues = assignmentForm.watch();
-  const projectValues = projectForm.watch();
-
-  useEffect(() => {
-    if (docType === "lab-report") {
-      setPreviewData(labValues);
-    } else if (docType === "assignment") {
-      setPreviewData(assignmentValues);
-    } else {
-      setPreviewData(projectValues);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    docType,
-    JSON.stringify(labValues),
-    JSON.stringify(assignmentValues),
-    JSON.stringify(projectValues),
-  ]);
-
-  const handleDownload = async (blob: Blob, filename: string) => {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  };
+  // NOTE: form values are intentionally NOT watched at this level. The preview
+  // subscribes to the active form itself (see PreviewSection), so typing does
+  // not re-render the whole page and never delays the Download button.
 
   const handleSubmit = async (
     formData: LabReportFormData | AssignmentFormData | ProjectReportFormData,
   ) => {
     setIsLoading(true);
     try {
-      let apiData: Record<string, unknown> = { ...formData };
+      const projectVariant =
+        docType === "project-report" ? projectTemplate : undefined;
+      const prepared = prepareDocument(
+        docType,
+        formData,
+        projectVariant ? { projectVariant } : undefined,
+      );
 
-      if (docType === "assignment") {
-        const assignmentData = formData as AssignmentFormData;
-        if (assignmentData.isSingleMember) {
-          const { members: _m, isSingleMember: _s, ...rest } = assignmentData;
-          apiData = rest;
-        } else {
-          const { name: _n, isSingleMember: _s, ...rest } = assignmentData;
-          apiData = rest;
-        }
+      let blob: Blob;
+      try {
+        // Fast path: render entirely in the browser - no server round-trip,
+        // independent from whatever the preview is doing.
+        blob = await generateDocxBlob(prepared);
+      } catch (clientError) {
+        console.warn(
+          "Client-side generation failed, falling back to API:",
+          clientError,
+        );
+        blob = await generateDocxViaApi(docType, formData, projectVariant);
       }
 
-      const response = await fetch("/api/generate-doc", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          docType,
-          formData: apiData,
-          templateVariant:
-            docType === "project-report" ? projectTemplate : undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to generate document");
-      }
-
-      // Extract filename from Content-Disposition header
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `${docType}-${Date.now()}.docx`;
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="(.+)"/);
-        if (match) {
-          filename = match[1];
-        }
-      }
-
-      const blob = await response.blob();
-      await handleDownload(blob, filename);
+      downloadBlob(blob, prepared.filename);
     } catch (error) {
       console.error("Error generating document:", error);
       alert(
@@ -194,17 +155,6 @@ export default function Home() {
       assignmentMembers.append({ reg: "", name: "" });
     }
   };
-
-  const currentTab = tabs.find((t) => t.id === docType)!;
-
-  const previewTemplateKey: PreviewTemplateKey =
-    docType === "project-report"
-      ? `project-report-${projectTemplate}`
-      : docType === "assignment"
-        ? isSingleMember
-          ? "assignment-individual"
-          : "assignment-group"
-        : "lab-report";
 
   const getColorClasses = (color: string, active: boolean) => {
     const colors: Record<
@@ -231,10 +181,10 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen flex flex-col overflow-hidden bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <main className="flex h-dvh flex-col overflow-hidden bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       {/* Header */}
-      <header className="shrink-0 border-b bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm px-6 py-3">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
+      <header className="shrink-0 border-b bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm px-4 py-3 sm:px-6">
+        <div className="mx-auto flex items-center justify-between max-w-7xl">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 shadow-md">
               <FileText className="h-5 w-5 text-white" />
@@ -248,14 +198,14 @@ export default function Home() {
       </header>
 
       {/* Tabs */}
-      <div className="shrink-0 bg-white dark:bg-slate-950 border-b px-6 py-2">
-        <div className="flex gap-1 max-w-7xl mx-auto">
+      <div className="shrink-0 border-b bg-white px-4 py-2 dark:bg-slate-950 sm:px-6">
+        <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setDocType(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all",
+                "flex shrink-0 items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all",
                 getColorClasses(tab.color, docType === tab.id),
               )}
             >
@@ -267,9 +217,9 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* Form Section */}
-        <div className="w-1/2 border-r bg-white dark:bg-slate-950 overflow-y-auto p-6">
+        <div className="min-h-0 w-full flex-1 overflow-y-auto border-b bg-white p-4 sm:p-6 md:w-1/2 md:border-r md:border-b-0 dark:bg-slate-950">
           <div className="max-w-md mx-auto space-y-4">
             {/* Lab Report Form */}
             {docType === "lab-report" && (
@@ -277,7 +227,7 @@ export default function Home() {
                 onSubmit={labForm.handleSubmit(handleSubmit)}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
                       Name *
@@ -287,6 +237,7 @@ export default function Home() {
                       placeholder="Your name"
                       className="h-9"
                     />
+                    <FieldError error={labForm.formState.errors.name} />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
@@ -297,9 +248,10 @@ export default function Home() {
                       placeholder="FA21-BSE-001"
                       className="h-9 font-mono text-sm"
                     />
+                    <FieldError error={labForm.formState.errors.rollNumber} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
                       Course Name *
@@ -309,6 +261,7 @@ export default function Home() {
                       placeholder="Data Structures Lab"
                       className="h-9"
                     />
+                    <FieldError error={labForm.formState.errors.courseName} />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
@@ -321,7 +274,7 @@ export default function Home() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
                       Instructor
@@ -341,12 +294,15 @@ export default function Home() {
                       {...labForm.register("dateSubmitted")}
                       className="h-9"
                     />
+                    <FieldError
+                      error={labForm.formState.errors.dateSubmitted}
+                    />
                   </div>
                 </div>
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md"
+                  className="sticky bottom-0 z-10 w-full h-10 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -373,8 +329,9 @@ export default function Home() {
                     placeholder="Enter assignment title"
                     className="h-9"
                   />
+                  <FieldError error={assignmentForm.formState.errors.title} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
                       Course Name *
@@ -383,6 +340,9 @@ export default function Home() {
                       {...assignmentForm.register("courseName")}
                       placeholder="Software Engineering"
                       className="h-9"
+                    />
+                    <FieldError
+                      error={assignmentForm.formState.errors.courseName}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -394,6 +354,9 @@ export default function Home() {
                       placeholder="Instructor name"
                       className="h-9"
                     />
+                    <FieldError
+                      error={assignmentForm.formState.errors.instructor}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -404,6 +367,9 @@ export default function Home() {
                     type="date"
                     {...assignmentForm.register("dateSubmitted")}
                     className="h-9"
+                  />
+                  <FieldError
+                    error={assignmentForm.formState.errors.dateSubmitted}
                   />
                 </div>
 
@@ -437,7 +403,7 @@ export default function Home() {
 
                 {isSingleMember ? (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <Label className="text-xs font-medium text-muted-foreground">
                           Your Name *
@@ -447,11 +413,9 @@ export default function Home() {
                           placeholder="Enter your name"
                           className="h-9"
                         />
-                        {assignmentForm.formState.errors.name && (
-                          <p className="text-xs text-red-500">
-                            {assignmentForm.formState.errors.name.message}
-                          </p>
-                        )}
+                        <FieldError
+                          error={assignmentForm.formState.errors.name}
+                        />
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs font-medium text-muted-foreground">
@@ -511,19 +475,17 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    {assignmentForm.formState.errors.members && (
-                      <p className="text-xs text-red-500">
-                        {assignmentForm.formState.errors.members.message ||
-                          "Please fill in all member details"}
-                      </p>
-                    )}
+                    <FieldError
+                      error={assignmentForm.formState.errors.members}
+                      fallback="Please fill in all member details"
+                    />
                   </div>
                 )}
 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md"
+                  className="sticky bottom-0 z-10 w-full h-10 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -593,8 +555,11 @@ export default function Home() {
                     placeholder="Enter project title"
                     className="h-9"
                   />
+                  <FieldError
+                    error={projectForm.formState.errors.projectTitle}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-muted-foreground">
                       Course Name *
@@ -603,6 +568,9 @@ export default function Home() {
                       {...projectForm.register("courseName")}
                       placeholder="Final Year Project"
                       className="h-9"
+                    />
+                    <FieldError
+                      error={projectForm.formState.errors.courseName}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -614,6 +582,9 @@ export default function Home() {
                       placeholder="Instructor name"
                       className="h-9"
                     />
+                    <FieldError
+                      error={projectForm.formState.errors.instructor}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -624,6 +595,9 @@ export default function Home() {
                     type="date"
                     {...projectForm.register("dateSubmitted")}
                     className="h-9"
+                  />
+                  <FieldError
+                    error={projectForm.formState.errors.dateSubmitted}
                   />
                 </div>
 
@@ -670,12 +644,16 @@ export default function Home() {
                       </div>
                     ))}
                   </div>
+                  <FieldError
+                    error={projectForm.formState.errors.members}
+                    fallback="Please fill in all member details"
+                  />
                 </div>
 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-10 bg-linear-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md"
+                  className="sticky bottom-0 z-10 w-full h-10 bg-linear-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -690,52 +668,28 @@ export default function Home() {
         </div>
 
         {/* Preview Section */}
-        <div className="w-1/2 bg-slate-100 dark:bg-slate-900 p-6 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between mb-4 shrink-0">
-            <h3 className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              <span className="font-extrabold">Preview</span> - Final output may
-              vary.
-            </h3>
-            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg shadow-sm border p-1">
-              <button
-                type="button"
-                onClick={() => setPreviewZoom(Math.max(0.2, previewZoom - 0.1))}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                title="Zoom out"
-              >
-                <ZoomOut className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-              </button>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300 w-12 text-center">
-                {Math.round(previewZoom * 100)}%
-              </span>
-              <button
-                type="button"
-                onClick={() => setPreviewZoom(Math.min(1, previewZoom + 0.1))}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                title="Zoom in"
-              >
-                <ZoomIn className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-              </button>
-              <div className="w-px h-4 bg-slate-200 dark:bg-slate-600 mx-1" />
-              <button
-                type="button"
-                onClick={() => setPreviewZoom(0.5)}
-                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                title="Reset zoom"
-              >
-                <RotateCcw className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto rounded-lg">
-            <WordDocPreview
-              key={previewTemplateKey}
-              templateKey={previewTemplateKey}
-              zoom={previewZoom}
-            />
-          </div>
-        </div>
+        {docType === "lab-report" ? (
+          <PreviewSection
+            control={labForm.control}
+            docType="lab-report"
+            projectTemplate={projectTemplate}
+            paused={isLoading}
+          />
+        ) : docType === "assignment" ? (
+          <PreviewSection
+            control={assignmentForm.control}
+            docType="assignment"
+            projectTemplate={projectTemplate}
+            paused={isLoading}
+          />
+        ) : (
+          <PreviewSection
+            control={projectForm.control}
+            docType="project-report"
+            projectTemplate={projectTemplate}
+            paused={isLoading}
+          />
+        )}
       </div>
     </main>
   );

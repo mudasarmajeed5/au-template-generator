@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 
+const subscribe = () => () => {};
+
 export function ModeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Hydration-safe "mounted" flag (server snapshot: false, client: true)
+  // without a setState-in-effect cascading render.
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
 
   if (!mounted) {
     return (
