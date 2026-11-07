@@ -8,11 +8,28 @@
  */
 
 export type DocumentType = "lab-report" | "assignment" | "project-report";
+export const COVER_DESIGNS = [
+  { id: "university-02", name: "Soft geometry", docType: "lab-report" },
+  { id: "university-03", name: "Grey masthead", docType: "lab-report" },
+  { id: "university-04", name: "Navy base", docType: "lab-report" },
+  { id: "university-05", name: "Rounded frame", docType: "lab-report" },
+  { id: "university-06", name: "Academic outline", docType: "lab-report" },
+  { id: "university-08", name: "Blue frame", docType: "assignment" },
+  { id: "university-09", name: "Navy bands", docType: "assignment" },
+  { id: "university-10", name: "Blue corners", docType: "assignment" },
+  { id: "university-11", name: "Minimal", docType: "assignment" },
+  { id: "university-12", name: "Blue masthead", docType: "assignment" },
+  { id: "university-13", name: "Inset panel", docType: "project-report" },
+  { id: "university-14", name: "Monochrome bands", docType: "project-report" },
+] as const;
+export type CoverDesignId = (typeof COVER_DESIGNS)[number]["id"];
+
 export type ProjectTemplateVariant = 1 | 2 | 3;
 export type AssignmentTemplateVariant = "individual" | "group";
 
 /** Identifies one of the .docx templates that can be previewed / generated. */
 export type PreviewTemplateKey =
+  | CoverDesignId
   | "lab-report"
   | "assignment-individual"
   | "assignment-group"
@@ -57,6 +74,7 @@ export interface ProjectReportData {
 export type FormData = LabReportData | AssignmentData | ProjectReportData;
 
 export interface DocRequestOptions {
+  coverDesign?: CoverDesignId;
   projectVariant?: ProjectTemplateVariant;
   assignmentVariant?: AssignmentTemplateVariant;
 }
@@ -77,7 +95,7 @@ export const DOCX_MIME_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 /** Public (static) paths of every supported template. */
-const TEMPLATE_PATHS: Record<PreviewTemplateKey, string> = {
+const TEMPLATE_PATHS: Record<Exclude<PreviewTemplateKey, CoverDesignId>, string> = {
   "lab-report": "/templates/labs/lab-report.docx",
   "assignment-individual":
     "/templates/assignments/assignment-template-individual.docx",
@@ -88,13 +106,21 @@ const TEMPLATE_PATHS: Record<PreviewTemplateKey, string> = {
 };
 
 export function templatePathFor(key: PreviewTemplateKey): string {
-  return TEMPLATE_PATHS[key];
+  if (COVER_DESIGNS.some((design) => design.id === key)) {
+    return `/templates/collection/${key}.docx`;
+  }
+  return TEMPLATE_PATHS[key as Exclude<PreviewTemplateKey, CoverDesignId>];
 }
 
 export function previewKeyFor(
   docType: DocumentType,
   options?: DocRequestOptions,
 ): PreviewTemplateKey {
+  if (options?.coverDesign) {
+    const design = COVER_DESIGNS.find((item) => item.id === options.coverDesign);
+    if (!design || design.docType !== docType) throw new Error("Invalid cover design for document type");
+    return design.id;
+  }
   if (docType === "project-report") {
     return `project-report-${options?.projectVariant ?? 1}` as PreviewTemplateKey;
   }
@@ -185,15 +211,37 @@ export function prepareDocument(
         resolveAssignmentVariant(formData as AssignmentData)
       : undefined;
   const resolved: DocRequestOptions = {
+    coverDesign: options?.coverDesign,
     projectVariant: options?.projectVariant,
     assignmentVariant,
   };
   const templateKey = previewKeyFor(docType, resolved);
 
+  const payload = shapePayload(docType, formData, assignmentVariant);
+  if (options?.coverDesign) {
+    const members = "members" in formData ? formData.members : undefined;
+    const individual = "name" in formData ? formData.name : "";
+    const roll = "rollNumber" in formData ? formData.rollNumber : "";
+    payload.documentLabel = {
+      "lab-report": "LAB REPORT",
+      assignment: "ASSIGNMENT",
+      "project-report": "PROJECT REPORT",
+    }[docType];
+    if (docType === "lab-report") {
+      payload.coverTitle = (formData as LabReportData).labWeek || "Lab report";
+    } else if (docType === "assignment") {
+      payload.coverTitle = (formData as AssignmentData).title;
+    } else {
+      payload.coverTitle = (formData as ProjectReportData).projectTitle;
+    }
+    payload.submittedBy = (docType === "project-report" || assignmentVariant === "group")
+      ? (members ?? []).map((member) => `${member.reg}   ${member.name}`).join("\n")
+      : `${roll || ""}   ${individual || ""}`.trim();
+  }
   return {
     templateKey,
     templatePath: templatePathFor(templateKey),
-    payload: shapePayload(docType, formData, assignmentVariant),
+    payload,
     projectVariant: docType === "project-report" ? options?.projectVariant : undefined,
     assignmentVariant,
     filename: buildFilename(docType, formData, resolved),
@@ -217,6 +265,20 @@ export async function renderDocx(
   template: ArrayBuffer | Uint8Array | string,
   payload: Record<string, unknown>,
 ): Promise<Uint8Array<ArrayBuffer>> {
+  if (payload.documentLabel) {
+    // Reserve room for branding and labels. Reject oversized submissions before
+    // download instead of letting the new single-page covers silently spill.
+    const lines = (value: unknown, width: number) => String(value ?? "")
+      .split("\n")
+      .reduce((total, line) => total + Math.max(1, Math.ceil(line.length / width)), 0);
+    const contentHeight = lines(payload.coverTitle, 45) * 0.35
+      + lines(payload.courseName, 65) * 0.2
+      + lines(payload.instructor, 65) * 0.2
+      + lines(payload.submittedBy, 65) * 0.2;
+    if (contentHeight > 3) {
+      throw new Error("Shorten the title or member details to keep this cover on one page.");
+    }
+  }
   const [{ default: PizZip }, { default: Docxtemplater }] = await Promise.all([
     import("pizzip"),
     import("docxtemplater"),

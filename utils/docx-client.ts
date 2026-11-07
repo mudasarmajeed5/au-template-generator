@@ -11,6 +11,7 @@ import {
   type FormData,
   type PreparedDocument,
   type ProjectTemplateVariant,
+  type CoverDesignId,
 } from "./docx-core";
 
 const templateCache = new Map<string, Promise<ArrayBuffer>>();
@@ -47,11 +48,12 @@ export async function generateDocxViaApi(
   docType: DocumentType,
   formData: FormData,
   templateVariant?: ProjectTemplateVariant,
+  coverDesign?: CoverDesignId,
 ): Promise<Blob> {
   const response = await fetch("/api/generate-doc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ docType, formData, templateVariant }),
+    body: JSON.stringify({ docType, formData, templateVariant, coverDesign }),
   });
 
   if (!response.ok) {

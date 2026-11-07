@@ -3,10 +3,9 @@ import path from "path";
 import {
   prepareDocument,
   renderDocx,
-  type AssignmentTemplateVariant,
+  type DocRequestOptions,
   type DocumentType,
   type FormData,
-  type ProjectTemplateVariant,
 } from "./docx-core";
 
 export type {
@@ -28,10 +27,7 @@ function resolveTemplateFile(templatePath: string): string {
 export async function generateDocument(
   docType: DocumentType,
   formData: FormData,
-  options?: {
-    projectVariant?: ProjectTemplateVariant;
-    assignmentVariant?: AssignmentTemplateVariant;
-  },
+  options?: DocRequestOptions,
 ): Promise<Uint8Array<ArrayBuffer>> {
   const prepared = prepareDocument(docType, formData, options);
 

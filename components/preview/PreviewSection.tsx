@@ -9,12 +9,14 @@ import {
   type DocumentType,
   type FormData,
   type ProjectTemplateVariant,
+  type CoverDesignId,
 } from "@/utils/docx-core";
 
 interface PreviewSectionProps<T extends FieldValues> {
   control: Control<T>;
   docType: DocumentType;
   projectTemplate: ProjectTemplateVariant;
+  coverDesign?: CoverDesignId;
   /** Paused while a download is running so preview work never delays it. */
   paused: boolean;
 }
@@ -28,6 +30,7 @@ function PreviewSectionInner<T extends FieldValues>({
   control,
   docType,
   projectTemplate,
+  coverDesign,
   paused,
 }: PreviewSectionProps<T>) {
   const [zoom, setZoom] = useState(0.5);
@@ -36,7 +39,7 @@ function PreviewSectionInner<T extends FieldValues>({
   const prepared = prepareDocument(
     docType,
     (values ?? {}) as unknown as FormData,
-    docType === "project-report" ? { projectVariant: projectTemplate } : undefined,
+    { coverDesign, projectVariant: docType === "project-report" ? projectTemplate : undefined },
   );
 
   return (

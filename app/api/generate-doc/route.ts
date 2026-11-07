@@ -5,7 +5,7 @@ import {
   type FormData,
   type ProjectTemplateVariant,
 } from "@/utils/doc-generator";
-import { prepareDocument } from "@/utils/docx-core";
+import { prepareDocument, type CoverDesignId } from "@/utils/docx-core";
 
 export const runtime = "nodejs";
 
@@ -18,10 +18,11 @@ const VALID_TYPES: DocumentType[] = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { docType, formData, templateVariant } = body as {
+    const { docType, formData, templateVariant, coverDesign } = body as {
       docType: DocumentType;
       formData: FormData;
       templateVariant?: ProjectTemplateVariant;
+      coverDesign?: CoverDesignId;
     };
 
     if (!docType || !formData) {
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const options = {
+      coverDesign,
       projectVariant: docType === "project-report" ? templateVariant : undefined,
     };
     const prepared = prepareDocument(docType, formData, options);

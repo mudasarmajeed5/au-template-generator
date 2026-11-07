@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PreviewSection } from "@/components/preview/PreviewSection";
-import { prepareDocument, type ProjectTemplateVariant } from "@/utils/docx-core";
+import { COVER_DESIGNS, prepareDocument, type CoverDesignId, type ProjectTemplateVariant } from "@/utils/docx-core";
 import {
   downloadBlob,
   generateDocxBlob,
@@ -55,6 +55,9 @@ export default function Home() {
   const [isSingleMember, setIsSingleMember] = useState(true);
   const [projectTemplate, setProjectTemplate] =
     useState<ProjectTemplateVariant>(1);
+
+  const [coverDesigns, setCoverDesigns] = useState<Partial<Record<DocumentType, CoverDesignId>>>({});
+  const coverDesign = coverDesigns[docType];
 
   // Lab Report Form
   const labForm = useForm<LabReportFormData>({
@@ -120,7 +123,7 @@ export default function Home() {
       const prepared = prepareDocument(
         docType,
         formData,
-        projectVariant ? { projectVariant } : undefined,
+        { projectVariant, coverDesign },
       );
 
       let blob: Blob;
@@ -133,7 +136,7 @@ export default function Home() {
           "Client-side generation failed, falling back to API:",
           clientError,
         );
-        blob = await generateDocxViaApi(docType, formData, projectVariant);
+        blob = await generateDocxViaApi(docType, formData, projectVariant, coverDesign);
       }
 
       downloadBlob(blob, prepared.filename);
@@ -221,6 +224,23 @@ export default function Home() {
         {/* Form Section */}
         <div className="min-h-0 w-full flex-1 overflow-y-auto border-b bg-white p-4 sm:p-6 md:w-1/2 md:border-r md:border-b-0 dark:bg-slate-950">
           <div className="max-w-md mx-auto space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="cover-design">Cover design</Label>
+              <select
+                id="cover-design"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={coverDesign ?? ""}
+                onChange={(event) => setCoverDesigns((previous) => ({
+                  ...previous,
+                  [docType]: event.target.value ? event.target.value as CoverDesignId : undefined,
+                }))}
+              >
+                <option value="">Original template</option>
+                {COVER_DESIGNS.filter((design) => design.docType === docType).map((design) => (
+                  <option key={design.id} value={design.id}>{design.name}</option>
+                ))}
+              </select>
+            </div>
             {/* Lab Report Form */}
             {docType === "lab-report" && (
               <form
@@ -504,7 +524,7 @@ export default function Home() {
                 className="space-y-4"
               >
                 {/* Template Selector */}
-                <div className="space-y-1.5">
+                {!coverDesign && <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                     <Layout className="h-3.5 w-3.5" />
                     Choose Template
@@ -544,8 +564,7 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
-                </div>
-
+                </div>}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">
                     Project Title *
@@ -673,6 +692,7 @@ export default function Home() {
             control={labForm.control}
             docType="lab-report"
             projectTemplate={projectTemplate}
+            coverDesign={coverDesign}
             paused={isLoading}
           />
         ) : docType === "assignment" ? (
@@ -680,6 +700,7 @@ export default function Home() {
             control={assignmentForm.control}
             docType="assignment"
             projectTemplate={projectTemplate}
+            coverDesign={coverDesign}
             paused={isLoading}
           />
         ) : (
@@ -687,6 +708,7 @@ export default function Home() {
             control={projectForm.control}
             docType="project-report"
             projectTemplate={projectTemplate}
+            coverDesign={coverDesign}
             paused={isLoading}
           />
         )}
