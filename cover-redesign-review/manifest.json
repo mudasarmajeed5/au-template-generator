@@ -1,0 +1,116 @@
+{
+  "status": "design-review",
+  "templateCount": 4,
+  "filledCases": 8,
+  "validation": {
+    "zipAndXml": "passed",
+    "internalRelationships": "passed",
+    "placeholderPopulation": "passed",
+    "singlePagePdf": "8 of 8",
+    "renderer": "Bundled LibreOffice",
+    "microsoftWordValidation": "not run",
+    "browser": "In-app browser; Chrome connection unavailable"
+  },
+  "templates": [
+    {
+      "id": "01-formal-academic-lab",
+      "name": "Heritage academic",
+      "category": "lab-report",
+      "designStyle": "Heritage academic",
+      "purpose": "Ivory paper, navy and gold framing, centered university masthead and paired submission details.",
+      "template": "docx/01-formal-academic-lab.docx",
+      "previews": {
+        "sample": {
+          "docx": "samples/01-formal-academic-lab-sample.docx",
+          "pdf": "previews/01-formal-academic-lab-sample/01-formal-academic-lab-sample.pdf",
+          "image": "previews/01-formal-academic-lab-sample/page-1.png",
+          "pages": 1
+        },
+        "stress": {
+          "docx": "samples/01-formal-academic-lab-stress.docx",
+          "pdf": "previews/01-formal-academic-lab-stress/01-formal-academic-lab-stress.pdf",
+          "image": "previews/01-formal-academic-lab-stress/page-1.png",
+          "pages": 1
+        }
+      },
+      "editableText": true,
+      "logo": "Existing public/aulogo.png",
+      "testedMemberCount": null
+    },
+    {
+      "id": "02-editorial-assignment",
+      "name": "Maroon editorial",
+      "category": "individual-assignment",
+      "designStyle": "Maroon editorial",
+      "purpose": "Cream university masthead, maroon geometric edge, serif title and a shaded author panel.",
+      "template": "docx/02-editorial-assignment.docx",
+      "previews": {
+        "sample": {
+          "docx": "samples/02-editorial-assignment-sample.docx",
+          "pdf": "previews/02-editorial-assignment-sample/02-editorial-assignment-sample.pdf",
+          "image": "previews/02-editorial-assignment-sample/page-1.png",
+          "pages": 1
+        },
+        "stress": {
+          "docx": "samples/02-editorial-assignment-stress.docx",
+          "pdf": "previews/02-editorial-assignment-stress/02-editorial-assignment-stress.pdf",
+          "image": "previews/02-editorial-assignment-stress/page-1.png",
+          "pages": 1
+        }
+      },
+      "editableText": true,
+      "logo": "Existing public/aulogo.png",
+      "testedMemberCount": null
+    },
+    {
+      "id": "03-split-group-assignment",
+      "name": "Teal geometry",
+      "category": "group-assignment",
+      "designStyle": "Teal geometry",
+      "purpose": "Deep teal sidebar, diagonal corner artwork, white university lettering and an editable team roster.",
+      "template": "docx/03-split-group-assignment.docx",
+      "previews": {
+        "sample": {
+          "docx": "samples/03-split-group-assignment-sample.docx",
+          "pdf": "previews/03-split-group-assignment-sample/03-split-group-assignment-sample.pdf",
+          "image": "previews/03-split-group-assignment-sample/page-1.png",
+          "pages": 1
+        },
+        "stress": {
+          "docx": "samples/03-split-group-assignment-stress.docx",
+          "pdf": "previews/03-split-group-assignment-stress/03-split-group-assignment-stress.pdf",
+          "image": "previews/03-split-group-assignment-stress/page-1.png",
+          "pages": 1
+        }
+      },
+      "editableText": true,
+      "logo": "Existing public/aulogo.png",
+      "testedMemberCount": 5
+    },
+    {
+      "id": "04-technical-project",
+      "name": "Blueprint project",
+      "category": "project-report",
+      "designStyle": "Blueprint project",
+      "purpose": "Navy university banner, gold accents, original system illustration and a full width member table.",
+      "template": "docx/04-technical-project.docx",
+      "previews": {
+        "sample": {
+          "docx": "samples/04-technical-project-sample.docx",
+          "pdf": "previews/04-technical-project-sample/04-technical-project-sample.pdf",
+          "image": "previews/04-technical-project-sample/page-1.png",
+          "pages": 1
+        },
+        "stress": {
+          "docx": "samples/04-technical-project-stress.docx",
+          "pdf": "previews/04-technical-project-stress/04-technical-project-stress.pdf",
+          "image": "previews/04-technical-project-stress/page-1.png",
+          "pages": 1
+        }
+      },
+      "editableText": true,
+      "logo": "Existing public/aulogo.png",
+      "testedMemberCount": 5
+    }
+  ]
+}
