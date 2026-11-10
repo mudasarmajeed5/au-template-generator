@@ -24,11 +24,11 @@ import {
   Trash2,
   User,
   Users,
-  Layout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PreviewSection } from "@/components/preview/PreviewSection";
-import { COVER_DESIGNS, prepareDocument, type CoverDesignId, type ProjectTemplateVariant } from "@/utils/docx-core";
+import { TemplatePicker } from "@/components/TemplatePicker";
+import { prepareDocument, type CoverDesignId, type ProjectTemplateVariant } from "@/utils/docx-core";
 import {
   downloadBlob,
   generateDocxBlob,
@@ -46,7 +46,7 @@ function FieldError({
   if (!error) return null;
   const message = error.message || fallback;
   if (!message) return null;
-  return <p className="text-xs text-red-600 dark:text-red-400">{message}</p>;
+  return <p className="text-xs text-destructive">{message}</p>;
 }
 
 export default function Home() {
@@ -56,7 +56,11 @@ export default function Home() {
   const [projectTemplate, setProjectTemplate] =
     useState<ProjectTemplateVariant>(1);
 
-  const [coverDesigns, setCoverDesigns] = useState<Partial<Record<DocumentType, CoverDesignId>>>({});
+  const [coverDesigns, setCoverDesigns] = useState<Partial<Record<DocumentType, CoverDesignId>>>({
+    "lab-report": "01-formal-academic-lab",
+    assignment: "02-editorial-assignment",
+    "project-report": "04-technical-project",
+  });
   const coverDesign = coverDesigns[docType];
 
   // Lab Report Form
@@ -159,40 +163,16 @@ export default function Home() {
     }
   };
 
-  const getColorClasses = (color: string, active: boolean) => {
-    const colors: Record<
-      string,
-      { active: string; inactive: string; accent: string }
-    > = {
-      emerald: {
-        active: "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30",
-        inactive: "text-emerald-600 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40",
-        accent: "from-emerald-500 to-teal-600",
-      },
-      blue: {
-        active: "bg-blue-500 text-white shadow-lg shadow-blue-500/30",
-        inactive: "text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40",
-        accent: "from-blue-500 to-indigo-600",
-      },
-      violet: {
-        active: "bg-violet-500 text-white shadow-lg shadow-violet-500/30",
-        inactive: "text-violet-600 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-950/40",
-        accent: "from-violet-500 to-purple-600",
-      },
-    };
-    return active ? colors[color].active : colors[color].inactive;
-  };
-
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+    <main className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       {/* Header */}
-      <header className="shrink-0 border-b bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm px-4 py-3 sm:px-6">
+      <header className="shrink-0 border-b bg-card px-4 py-4 sm:px-6">
         <div className="mx-auto flex items-center justify-between max-w-7xl">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 shadow-md">
-              <FileText className="h-5 w-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
+              <FileText className="h-5 w-5" />
             </div>
-            <h1 className="text-lg font-bold tracking-tight">
+            <h1 className="text-base font-semibold tracking-tight sm:text-lg">
               Cover Page Generator
             </h1>
           </div>
@@ -201,15 +181,18 @@ export default function Home() {
       </header>
 
       {/* Tabs */}
-      <div className="shrink-0 border-b bg-white px-4 py-2 dark:bg-slate-950 sm:px-6">
+      <div className="shrink-0 border-b bg-card px-4 py-2.5 sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setDocType(tab.id)}
+              aria-pressed={docType === tab.id}
               className={cn(
-                "flex shrink-0 items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all",
-                getColorClasses(tab.color, docType === tab.id),
+                "flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                docType === tab.id
+                  ? "bg-secondary text-secondary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -220,32 +203,33 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+        <TemplatePicker
+          key={docType}
+          docType={docType}
+          coverDesign={coverDesign}
+          projectTemplate={projectTemplate}
+          isSingleMember={isSingleMember}
+          onSelect={(option) => {
+            setCoverDesigns((previous) => ({
+              ...previous,
+              [docType]: option.coverDesign,
+            }));
+            if (option.projectVariant) setProjectTemplate(option.projectVariant);
+          }}
+        />
         {/* Form Section */}
-        <div className="min-h-0 w-full flex-1 overflow-y-auto border-b bg-white p-4 sm:p-6 md:w-1/2 md:border-r md:border-b-0 dark:bg-slate-950">
-          <div className="max-w-md mx-auto space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="cover-design">Cover design</Label>
-              <select
-                id="cover-design"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                value={coverDesign ?? ""}
-                onChange={(event) => setCoverDesigns((previous) => ({
-                  ...previous,
-                  [docType]: event.target.value ? event.target.value as CoverDesignId : undefined,
-                }))}
-              >
-                <option value="">Original template</option>
-                {COVER_DESIGNS.filter((design) => design.docType === docType).map((design) => (
-                  <option key={design.id} value={design.id}>{design.name}</option>
-                ))}
-              </select>
+        <div className="w-full shrink-0 border-b bg-card p-4 sm:p-6 md:min-h-0 md:w-1/2 md:flex-1 md:overflow-y-auto md:border-r md:border-b-0">
+          <div className="mx-auto max-w-md space-y-6">
+            <div>
+              <h2 className="text-sm font-semibold">Document details</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Fill in the details for your cover page.</p>
             </div>
             {/* Lab Report Form */}
             {docType === "lab-report" && (
               <form
                 onSubmit={labForm.handleSubmit(handleSubmit)}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
@@ -255,7 +239,7 @@ export default function Home() {
                     <Input
                       {...labForm.register("name")}
                       placeholder="Your name"
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError error={labForm.formState.errors.name} />
                   </div>
@@ -266,7 +250,7 @@ export default function Home() {
                     <Input
                       {...labForm.register("rollNumber")}
                       placeholder="FA21-BSE-001"
-                      className="h-9 font-mono text-sm"
+                      className="h-11 font-mono text-sm"
                     />
                     <FieldError error={labForm.formState.errors.rollNumber} />
                   </div>
@@ -279,7 +263,7 @@ export default function Home() {
                     <Input
                       {...labForm.register("courseName")}
                       placeholder="Data Structures Lab"
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError error={labForm.formState.errors.courseName} />
                   </div>
@@ -290,7 +274,7 @@ export default function Home() {
                     <Input
                       {...labForm.register("labWeek")}
                       placeholder="Week 5"
-                      className="h-9"
+                      className="h-11"
                     />
                   </div>
                 </div>
@@ -302,7 +286,7 @@ export default function Home() {
                     <Input
                       {...labForm.register("instructor")}
                       placeholder="Instructor name"
-                      className="h-9"
+                      className="h-11"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -312,7 +296,7 @@ export default function Home() {
                     <Input
                       type="date"
                       {...labForm.register("dateSubmitted")}
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError
                       error={labForm.formState.errors.dateSubmitted}
@@ -322,7 +306,7 @@ export default function Home() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="sticky bottom-0 z-10 w-full h-10 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md"
+                  className="sticky bottom-0 z-10 h-11 w-full shadow-sm"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -338,7 +322,7 @@ export default function Home() {
             {docType === "assignment" && (
               <form
                 onSubmit={assignmentForm.handleSubmit(handleSubmit)}
-                className="space-y-4"
+                className="space-y-5"
               >
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">
@@ -347,7 +331,7 @@ export default function Home() {
                   <Input
                     {...assignmentForm.register("title")}
                     placeholder="Enter assignment title"
-                    className="h-9"
+                    className="h-11"
                   />
                   <FieldError error={assignmentForm.formState.errors.title} />
                 </div>
@@ -359,7 +343,7 @@ export default function Home() {
                     <Input
                       {...assignmentForm.register("courseName")}
                       placeholder="Software Engineering"
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError
                       error={assignmentForm.formState.errors.courseName}
@@ -372,7 +356,7 @@ export default function Home() {
                     <Input
                       {...assignmentForm.register("instructor")}
                       placeholder="Instructor name"
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError
                       error={assignmentForm.formState.errors.instructor}
@@ -386,7 +370,7 @@ export default function Home() {
                   <Input
                     type="date"
                     {...assignmentForm.register("dateSubmitted")}
-                    className="h-9"
+                    className="h-11"
                   />
                   <FieldError
                     error={assignmentForm.formState.errors.dateSubmitted}
@@ -394,15 +378,16 @@ export default function Home() {
                 </div>
 
                 {/* Submission Type Toggle */}
-                <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg">
+                <div className="flex gap-1 rounded-full bg-muted p-1">
                   <button
                     type="button"
                     onClick={() => handleToggleMemberType(true)}
+                    aria-pressed={isSingleMember}
                     className={cn(
-                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all",
+                      "flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
                       isSingleMember
-                        ? "bg-white dark:bg-slate-800 shadow text-blue-600 dark:text-blue-300"
-                        : "text-slate-500 dark:text-slate-400",
+                        ? "bg-secondary text-secondary-foreground"
+                        : "text-muted-foreground hover:bg-card/60",
                     )}
                   >
                     <User className="h-4 w-4" /> Individual
@@ -410,11 +395,12 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => handleToggleMemberType(false)}
+                    aria-pressed={!isSingleMember}
                     className={cn(
-                      "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all",
+                      "flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-primary",
                       !isSingleMember
-                        ? "bg-white dark:bg-slate-800 shadow text-blue-600 dark:text-blue-300"
-                        : "text-slate-500 dark:text-slate-400",
+                        ? "bg-secondary text-secondary-foreground"
+                        : "text-muted-foreground hover:bg-card/60",
                     )}
                   >
                     <Users className="h-4 w-4" /> Group
@@ -431,7 +417,7 @@ export default function Home() {
                         <Input
                           {...assignmentForm.register("name")}
                           placeholder="Enter your name"
-                          className="h-9"
+                          className="h-11"
                         />
                         <FieldError
                           error={assignmentForm.formState.errors.name}
@@ -444,7 +430,7 @@ export default function Home() {
                         <Input
                           {...assignmentForm.register("rollNumber")}
                           placeholder="FA21-BSE-001"
-                          className="h-9 font-mono text-sm"
+                          className="h-11 font-mono text-sm"
                         />
                       </div>
                     </div>
@@ -490,7 +476,7 @@ export default function Home() {
                             disabled={assignmentMembers.fields.length === 1}
                             className="h-8 w-8 shrink-0"
                           >
-                            <Trash2 className="h-3 w-3 text-red-500" />
+                            <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
                         </div>
                       ))}
@@ -505,7 +491,7 @@ export default function Home() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="sticky bottom-0 z-10 w-full h-10 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md"
+                  className="sticky bottom-0 z-10 h-11 w-full shadow-sm"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -521,50 +507,8 @@ export default function Home() {
             {docType === "project-report" && (
               <form
                 onSubmit={projectForm.handleSubmit(handleSubmit)}
-                className="space-y-4"
+                className="space-y-5"
               >
-                {/* Template Selector */}
-                {!coverDesign && <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Layout className="h-3.5 w-3.5" />
-                    Choose Template
-                  </Label>
-                  <div className="flex gap-2">
-                    {([1, 2, 3] as const).map((variant) => (
-                      <button
-                        key={variant}
-                        type="button"
-                        onClick={() => setProjectTemplate(variant)}
-                        className={cn(
-                          "relative flex-1 px-3 py-2 rounded-lg border-2 transition-all flex items-center justify-center gap-2",
-                          projectTemplate === variant
-                            ? "border-violet-500 bg-violet-50 dark:bg-violet-950/40 shadow-sm"
-                            : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-900",
-                        )}
-                      >
-                        <div className="w-5 h-6 rounded-sm bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                          <span className="text-[8px] font-bold text-slate-500 dark:text-slate-300">
-                            {variant}
-                          </span>
-                        </div>
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          Style {variant}
-                        </span>
-                        {projectTemplate === variant && (
-                          <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-violet-500 rounded-full flex items-center justify-center">
-                            <svg
-                              className="w-2 h-2 text-white"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
-                            </svg>
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">
                     Project Title *
@@ -572,7 +516,7 @@ export default function Home() {
                   <Input
                     {...projectForm.register("projectTitle")}
                     placeholder="Enter project title"
-                    className="h-9"
+                    className="h-11"
                   />
                   <FieldError
                     error={projectForm.formState.errors.projectTitle}
@@ -586,7 +530,7 @@ export default function Home() {
                     <Input
                       {...projectForm.register("courseName")}
                       placeholder="Final Year Project"
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError
                       error={projectForm.formState.errors.courseName}
@@ -599,7 +543,7 @@ export default function Home() {
                     <Input
                       {...projectForm.register("instructor")}
                       placeholder="Instructor name"
-                      className="h-9"
+                      className="h-11"
                     />
                     <FieldError
                       error={projectForm.formState.errors.instructor}
@@ -613,7 +557,7 @@ export default function Home() {
                   <Input
                     type="date"
                     {...projectForm.register("dateSubmitted")}
-                    className="h-9"
+                    className="h-11"
                   />
                   <FieldError
                     error={projectForm.formState.errors.dateSubmitted}
@@ -658,7 +602,7 @@ export default function Home() {
                           disabled={projectMembers.fields.length === 1}
                           className="h-8 w-8 shrink-0"
                         >
-                          <Trash2 className="h-3 w-3 text-red-500" />
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
                       </div>
                     ))}
@@ -672,7 +616,7 @@ export default function Home() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="sticky bottom-0 z-10 w-full h-10 bg-linear-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md"
+                  className="sticky bottom-0 z-10 h-11 w-full shadow-sm"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />

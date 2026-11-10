@@ -43,16 +43,16 @@ function PreviewSectionInner<T extends FieldValues>({
   );
 
   return (
-    <section className="flex min-h-0 w-full flex-1 flex-col bg-slate-100 p-4 sm:p-6 md:w-1/2 dark:bg-slate-900">
+    <section aria-label="Document preview" className="flex min-h-[520px] w-full shrink-0 flex-col bg-background p-4 sm:p-6 md:min-h-0 md:w-1/2 md:flex-1">
       <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <h3 className="text-xs tracking-wider text-slate-500 uppercase sm:text-sm dark:text-slate-400">
-          <span className="font-extrabold">Preview</span> - Final output may
-          vary.
-        </h3>
+        <div>
+          <h2 className="text-sm font-semibold">Document preview</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Updates as you type</p>
+        </div>
         <ZoomControls
           zoom={zoom}
-          onZoomIn={() => setZoom((z) => Math.min(1, z + 0.1))}
-          onZoomOut={() => setZoom((z) => Math.max(0.2, z - 0.1))}
+          onZoomIn={() => setZoom((z) => Math.min(1, Math.round((z + 0.1) * 10) / 10))}
+          onZoomOut={() => setZoom((z) => Math.max(0.2, Math.round((z - 0.1) * 10) / 10))}
           onReset={() => setZoom(0.5)}
         />
       </div>

@@ -18,17 +18,19 @@ for (const design of COVER_DESIGNS) {
     const output = await renderDocx(await readFile(`public${prepared.templatePath}`), prepared.payload);
     const zip = new PizZip(output);
     const xml = zip.file('word/document.xml').asText();
-    assert.ok(xml.includes('Air University'));
-    assert.ok(zip.file('word/media/au-logo.png'));
+    const nativeText = [...xml.matchAll(/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g)].map((match) => match[1]).join(' ');
+    assert.ok(!/air\s*university/i.test(nativeText));
+    assert.ok(zip.file(/^word\/media\/.*\.png$/).length > 0);
     assert.ok(!/\{(?:coverTitle|submittedBy|courseName|instructor|dateSubmitted|generatedDate|documentLabel)\}/.test(xml));
     assert.ok(!xml.includes('John Doe') && !xml.includes('University Name'));
     assert.ok(xml.includes(design.docType === 'assignment' && single ? 'Ayesha Khan' : design.docType === 'lab-report' ? 'Ayesha Khan' : 'Student 5 with an extended family name'));
+    assert.ok(!/\{(?:#|\/)?(?:name|reg|members|title|projectTitle|courseName|submittedBy)\}/.test(xml));
     await writeFile(`/tmp/au-cover-qa/${design.id}${single ? '-individual' : ''}.docx`, output);
   }
 }
 assert.throws(() => prepareDocument('lab-report', {}, { coverDesign: 'unknown' }));
 assert.throws(() => prepareDocument('lab-report', {}, { coverDesign: 'university-14' }));
-console.log('All 12 covers populate correctly, including five-member and individual assignments.');
+console.log('All 8 covers populate correctly, including five-member and individual assignments.');
 
-const oversized = prepareDocument("lab-report", { labWeek: "A".repeat(2000) }, { coverDesign: "university-02" });
+const oversized = prepareDocument("lab-report", { labWeek: "A".repeat(2000) }, { coverDesign: "01-formal-academic-lab" });
 await assert.rejects(renderDocx(await readFile(`public${oversized.templatePath}`), oversized.payload), /one page/);

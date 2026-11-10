@@ -9,18 +9,14 @@
 
 export type DocumentType = "lab-report" | "assignment" | "project-report";
 export const COVER_DESIGNS = [
-  { id: "university-02", name: "Soft geometry", docType: "lab-report" },
-  { id: "university-03", name: "Grey masthead", docType: "lab-report" },
-  { id: "university-04", name: "Navy base", docType: "lab-report" },
-  { id: "university-05", name: "Rounded frame", docType: "lab-report" },
-  { id: "university-06", name: "Academic outline", docType: "lab-report" },
-  { id: "university-08", name: "Blue frame", docType: "assignment" },
-  { id: "university-09", name: "Navy bands", docType: "assignment" },
-  { id: "university-10", name: "Blue corners", docType: "assignment" },
-  { id: "university-11", name: "Minimal", docType: "assignment" },
-  { id: "university-12", name: "Blue masthead", docType: "assignment" },
-  { id: "university-13", name: "Inset panel", docType: "project-report" },
-  { id: "university-14", name: "Monochrome bands", docType: "project-report" },
+  { id: "01-formal-academic-lab", name: "Heritage academic", docType: "lab-report" },
+  { id: "05-cobalt-ledger-lab", name: "Cobalt ledger", docType: "lab-report" },
+  { id: "06-forest-folio-lab", name: "Forest folio", docType: "lab-report" },
+  { id: "02-editorial-assignment", name: "Maroon editorial", docType: "assignment" },
+  { id: "03-split-group-assignment", name: "Teal geometry", docType: "assignment" },
+  { id: "07-slate-grid-assignment", name: "Slate grid", docType: "assignment" },
+  { id: "08-amber-arc-assignment", name: "Amber arc", docType: "assignment" },
+  { id: "04-technical-project", name: "Blueprint project", docType: "project-report" },
 ] as const;
 export type CoverDesignId = (typeof COVER_DESIGNS)[number]["id"];
 
@@ -233,6 +229,9 @@ export function prepareDocument(
       payload.coverTitle = (formData as AssignmentData).title;
     } else {
       payload.coverTitle = (formData as ProjectReportData).projectTitle;
+    }
+    if (docType === "assignment" && assignmentVariant === "individual") {
+      payload.members = [{ name: individual || "", reg: roll || "" }];
     }
     payload.submittedBy = (docType === "project-report" || assignmentVariant === "group")
       ? (members ?? []).map((member) => `${member.reg}   ${member.name}`).join("\n")

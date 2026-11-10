@@ -118,21 +118,22 @@ export const WordDocPreview = memo(function WordDocPreview({
   return (
     <div
       aria-busy={loading}
-      className="relative h-full min-h-0 overflow-auto flex items-start justify-center rounded-lg bg-slate-200/60 p-4 dark:bg-slate-800/60"
+      className="relative h-full min-h-0 overflow-auto flex items-start justify-center rounded-xl bg-muted/60 p-4"
     >
       <canvas
         ref={canvasRef}
+        className="preview-canvas"
         style={{
-          transform: `scale(${zoom})`,
+          transform: `translateZ(0) scale(${zoom})`,
           transformOrigin: "top center",
           maxWidth: "none",
         }}
       />
 
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/75 dark:bg-slate-950/75">
+        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/80">
           <div
-            className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"
+            className="flex items-center gap-2 text-sm text-muted-foreground"
             role="status"
           >
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -142,8 +143,8 @@ export const WordDocPreview = memo(function WordDocPreview({
       )}
 
       {!loading && error && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 text-center rounded-lg bg-white/80 dark:bg-slate-950/80">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <div className="absolute inset-0 flex items-center justify-center p-6 text-center rounded-xl bg-background/90">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
     </div>
