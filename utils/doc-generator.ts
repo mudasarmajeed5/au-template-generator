@@ -35,7 +35,7 @@ export async function generateDocument(
   // and read from disk here as the server-side fallback path).
   const template = await fs.promises.readFile(resolveTemplateFile(prepared.templatePath));
 
-  return renderDocx(template, prepared.payload);
+  return renderDocx(template, prepared.payload, prepared);
 }
 
 export function getTemplateFields(docType: DocumentType): string[] {

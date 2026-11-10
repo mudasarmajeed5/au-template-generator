@@ -70,6 +70,7 @@ export interface ProjectReportData {
 export type FormData = LabReportData | AssignmentData | ProjectReportData;
 
 export interface DocRequestOptions {
+  includePageNumbers?: boolean;
   coverDesign?: CoverDesignId;
   projectVariant?: ProjectTemplateVariant;
   assignmentVariant?: AssignmentTemplateVariant;
@@ -77,6 +78,7 @@ export interface DocRequestOptions {
 
 /** Everything needed to render (preview or download) one document. */
 export interface PreparedDocument {
+  includePageNumbers?: boolean;
   templateKey: PreviewTemplateKey;
   /** Static URL of the .docx template (served from `/public`). */
   templatePath: string;
@@ -238,6 +240,7 @@ export function prepareDocument(
       : `${roll || ""}   ${individual || ""}`.trim();
   }
   return {
+    includePageNumbers: options?.includePageNumbers,
     templateKey,
     templatePath: templatePathFor(templateKey),
     payload,
@@ -263,6 +266,7 @@ export function formatGeneratedDate(date: Date = new Date()): string {
 export async function renderDocx(
   template: ArrayBuffer | Uint8Array | string,
   payload: Record<string, unknown>,
+  options?: Pick<DocRequestOptions, "includePageNumbers">,
 ): Promise<Uint8Array<ArrayBuffer>> {
   if (payload.documentLabel) {
     // Reserve room for branding and labels. Reject oversized submissions before
@@ -294,6 +298,11 @@ export async function renderDocx(
     generatedDate: formatGeneratedDate(),
     pageNumber: "{PAGE}",
   });
+
+  if (options?.includePageNumbers !== undefined) {
+    const { applyPageNumbers } = await import("./docx-page-numbers.ts");
+    applyPageNumbers(doc.getZip(), options.includePageNumbers);
+  }
 
   const buffer = doc.getZip().generate({
     type: "arraybuffer",

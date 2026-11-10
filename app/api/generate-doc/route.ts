@@ -18,11 +18,12 @@ const VALID_TYPES: DocumentType[] = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { docType, formData, templateVariant, coverDesign } = body as {
+    const { docType, formData, templateVariant, coverDesign, includePageNumbers } = body as {
       docType: DocumentType;
       formData: FormData;
       templateVariant?: ProjectTemplateVariant;
       coverDesign?: CoverDesignId;
+      includePageNumbers?: boolean;
     };
 
     if (!docType || !formData) {
@@ -39,7 +40,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (includePageNumbers !== undefined && typeof includePageNumbers !== "boolean") {
+      return NextResponse.json({ error: "Invalid page numbers option" }, { status: 400 });
+    }
+
     const options = {
+      includePageNumbers,
       coverDesign,
       projectVariant: docType === "project-report" ? templateVariant : undefined,
     };

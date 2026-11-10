@@ -53,6 +53,7 @@ export const WordDocPreview = memo(function WordDocPreview({
   // of the change key or every render would look like new content.
   const dataKey = JSON.stringify([
     prepared.templateKey,
+    prepared.includePageNumbers,
     prepared.payload,
     prepared.projectVariant ?? null,
     prepared.assignmentVariant ?? null,

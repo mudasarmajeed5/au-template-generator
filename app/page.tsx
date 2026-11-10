@@ -51,6 +51,7 @@ function FieldError({
 
 export default function Home() {
   const [docType, setDocType] = useState<DocumentType>("lab-report");
+  const [includePageNumbers, setIncludePageNumbers] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSingleMember, setIsSingleMember] = useState(true);
   const [projectTemplate, setProjectTemplate] =
@@ -127,7 +128,7 @@ export default function Home() {
       const prepared = prepareDocument(
         docType,
         formData,
-        { projectVariant, coverDesign },
+        { projectVariant, coverDesign, includePageNumbers },
       );
 
       let blob: Blob;
@@ -140,7 +141,7 @@ export default function Home() {
           "Client-side generation failed, falling back to API:",
           clientError,
         );
-        blob = await generateDocxViaApi(docType, formData, projectVariant, coverDesign);
+        blob = await generateDocxViaApi(docType, formData, projectVariant, coverDesign, includePageNumbers);
       }
 
       downloadBlob(blob, prepared.filename);
@@ -303,6 +304,20 @@ export default function Home() {
                     />
                   </div>
                 </div>
+                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-3">
+                  <span>
+                    <span className="block text-sm font-medium">Include page numbers</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">Automatically number each page in Word.</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={includePageNumbers}
+                    onChange={(event) => setIncludePageNumbers(event.target.checked)}
+                    className="size-5 shrink-0 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  />
+                </label>
+
                 <Button
                   type="submit"
                   disabled={isLoading}
@@ -488,6 +503,20 @@ export default function Home() {
                   </div>
                 )}
 
+                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-3">
+                  <span>
+                    <span className="block text-sm font-medium">Include page numbers</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">Automatically number each page in Word.</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={includePageNumbers}
+                    onChange={(event) => setIncludePageNumbers(event.target.checked)}
+                    className="size-5 shrink-0 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  />
+                </label>
+
                 <Button
                   type="submit"
                   disabled={isLoading}
@@ -613,6 +642,20 @@ export default function Home() {
                   />
                 </div>
 
+                <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-3">
+                  <span>
+                    <span className="block text-sm font-medium">Include page numbers</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">Automatically number each page in Word.</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={includePageNumbers}
+                    onChange={(event) => setIncludePageNumbers(event.target.checked)}
+                    className="size-5 shrink-0 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  />
+                </label>
+
                 <Button
                   type="submit"
                   disabled={isLoading}
@@ -637,6 +680,7 @@ export default function Home() {
             docType="lab-report"
             projectTemplate={projectTemplate}
             coverDesign={coverDesign}
+            includePageNumbers={includePageNumbers}
             paused={isLoading}
           />
         ) : docType === "assignment" ? (
@@ -645,6 +689,7 @@ export default function Home() {
             docType="assignment"
             projectTemplate={projectTemplate}
             coverDesign={coverDesign}
+            includePageNumbers={includePageNumbers}
             paused={isLoading}
           />
         ) : (
@@ -653,6 +698,7 @@ export default function Home() {
             docType="project-report"
             projectTemplate={projectTemplate}
             coverDesign={coverDesign}
+            includePageNumbers={includePageNumbers}
             paused={isLoading}
           />
         )}

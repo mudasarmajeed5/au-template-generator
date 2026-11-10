@@ -39,7 +39,7 @@ export async function generateDocxBlob(
   prepared: PreparedDocument,
 ): Promise<Blob> {
   const template = await fetchTemplate(prepared.templatePath);
-  const bytes = await renderDocx(template, prepared.payload);
+  const bytes = await renderDocx(template, prepared.payload, prepared);
   return new Blob([bytes], { type: DOCX_MIME_TYPE });
 }
 
@@ -49,11 +49,12 @@ export async function generateDocxViaApi(
   formData: FormData,
   templateVariant?: ProjectTemplateVariant,
   coverDesign?: CoverDesignId,
+  includePageNumbers?: boolean,
 ): Promise<Blob> {
   const response = await fetch("/api/generate-doc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ docType, formData, templateVariant, coverDesign }),
+    body: JSON.stringify({ docType, formData, templateVariant, coverDesign, includePageNumbers }),
   });
 
   if (!response.ok) {

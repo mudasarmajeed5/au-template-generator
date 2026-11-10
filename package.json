@@ -8,11 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/smoke-test.mjs && node scripts/cover-test.mjs"
+    "test": "node scripts/smoke-test.mjs && node scripts/cover-test.mjs && node scripts/page-numbers-test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@silurus/ooxml": "0.88.0",
+    "@xmldom/xmldom": "^0.9.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "docxtemplater": "^3.68.3",

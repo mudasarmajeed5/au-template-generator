@@ -17,6 +17,7 @@ interface PreviewSectionProps<T extends FieldValues> {
   docType: DocumentType;
   projectTemplate: ProjectTemplateVariant;
   coverDesign?: CoverDesignId;
+  includePageNumbers: boolean;
   /** Paused while a download is running so preview work never delays it. */
   paused: boolean;
 }
@@ -31,6 +32,7 @@ function PreviewSectionInner<T extends FieldValues>({
   docType,
   projectTemplate,
   coverDesign,
+  includePageNumbers,
   paused,
 }: PreviewSectionProps<T>) {
   const [zoom, setZoom] = useState(0.5);
@@ -39,7 +41,7 @@ function PreviewSectionInner<T extends FieldValues>({
   const prepared = prepareDocument(
     docType,
     (values ?? {}) as unknown as FormData,
-    { coverDesign, projectVariant: docType === "project-report" ? projectTemplate : undefined },
+    { coverDesign, includePageNumbers, projectVariant: docType === "project-report" ? projectTemplate : undefined },
   );
 
   return (
